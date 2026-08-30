@@ -22,7 +22,7 @@
 | 6 | Trips ve Drivers | 65 dk | ✅ |
 | 7 | Koridor haritası ve canlı simülasyon | 80 dk | ✅ |
 | 8 | Rehberli tur | 50 dk | ✅ |
-| 9 | Cila, erişilebilirlik, metin | 65 dk | ⬜ |
+| 9 | Cila, erişilebilirlik, metin | 65 dk | ✅ |
 | 10 | Gerekçe bölümü ve yayın | 40 dk | ⬜ |
 | | **Toplam** | **~12.7 sa** | |
 

@@ -60,17 +60,19 @@
   --surface-3: var(--gray-200);
   --rail: oklch(1 0 0);
 
-  --border: var(--gray-200);
+  --border: var(--gray-200);                     /* structure: rules, card edges */
   --border-strong: var(--gray-300);
+  --control-border: oklch(0.655 0.010 264);      /* 3.17 — buttons, inputs, checkboxes */
 
   --text: var(--gray-900);
   --text-2: var(--gray-700);
-  --text-muted: var(--gray-500);
+  --text-muted: oklch(0.555 0.014 264);   /* 4.75 on surface — gray-500 measured 4.01 */
   --text-inverse: oklch(1 0 0);
 
-  --accent: var(--brand-500);
-  --accent-hover: var(--brand-600);
-  --accent-active: var(--brand-700);
+  --accent: var(--brand-500);                    /* identity: strips, dots, borders (3.66 ≥ 3) */
+  --accent-strong: oklch(0.565 0.175 31.5);      /* 5.02 — accent as text, and behind white text */
+  --accent-hover: oklch(0.505 0.158 31);
+  --accent-active: oklch(0.455 0.140 31);
   --accent-soft: var(--brand-050);
   --accent-border: var(--brand-200);
   --on-accent: oklch(1 0 0);
@@ -155,11 +157,13 @@
   --rail: oklch(0.156 0.008 264);
   --border: oklch(0.288 0.010 264);
   --border-strong: oklch(0.372 0.012 264);
+  --control-border: oklch(0.500 0.012 264);  /* 3.16 */
   --text: var(--gray-100);
   --text-2: oklch(0.812 0.008 264);
   --text-muted: oklch(0.652 0.012 264);
   --text-inverse: var(--gray-990);
   --accent: oklch(0.688 0.175 33);
+  --accent-strong: oklch(0.688 0.175 33);   /* already 6.29 on dark surfaces */
   --accent-hover: oklch(0.748 0.152 34);
   --accent-active: oklch(0.788 0.132 35);
   --accent-soft: oklch(0.318 0.086 30);
@@ -193,11 +197,13 @@
     --rail: oklch(0.156 0.008 264);
     --border: oklch(0.288 0.010 264);
     --border-strong: oklch(0.372 0.012 264);
+  --control-border: oklch(0.500 0.012 264);  /* 3.16 */
     --text: var(--gray-100);
     --text-2: oklch(0.812 0.008 264);
     --text-muted: oklch(0.652 0.012 264);
     --text-inverse: var(--gray-990);
     --accent: oklch(0.688 0.175 33);
+  --accent-strong: oklch(0.688 0.175 33);   /* already 6.29 on dark surfaces */
     --accent-hover: oklch(0.748 0.152 34);
     --accent-active: oklch(0.788 0.132 35);
     --accent-soft: oklch(0.318 0.086 30);
@@ -248,7 +254,7 @@ p { margin: 0; max-width: var(--measure); }
 button, input, select, textarea { font: inherit; color: inherit; }
 [hidden] { display: none !important; }
 
-a { color: var(--accent); text-decoration: none; }
+a { color: var(--accent-strong); text-decoration: none; }
 a:hover { color: var(--accent-hover); text-decoration: underline; }
 
 :where(button, a, input, select, [tabindex]):focus-visible {
@@ -258,6 +264,16 @@ a:hover { color: var(--accent-hover); text-decoration: underline; }
 
 .tnum { font-variant-numeric: tabular-nums; }
 .identifier { font-weight: var(--w-strong); letter-spacing: 0.02em; font-variant-numeric: tabular-nums; }
+.skip {
+  position: fixed; top: 0; left: 0; z-index: 100;
+  transform: translateY(-120%);
+  padding: var(--sp-4) var(--sp-6);
+  background: var(--surface); color: var(--text);
+  border: 1px solid var(--control-border); border-radius: 0 0 var(--r-control) 0;
+  box-shadow: var(--shadow-pop); text-decoration: none; font-weight: var(--w-label);
+}
+.skip:focus { transform: translateY(0); text-decoration: none; }
+
 .sr-only {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
@@ -297,11 +313,11 @@ a:hover { color: var(--accent-hover); text-decoration: underline; }
   cursor: pointer; white-space: nowrap;
   transition: background var(--dur-micro) var(--ease), border-color var(--dur-micro) var(--ease);
 }
-.btn--primary { background: var(--accent); color: var(--on-accent); box-shadow: var(--shadow-accent); }
+.btn--primary { background: var(--accent-strong); color: var(--on-accent); box-shadow: var(--shadow-accent); }
 .btn--primary:hover:not(:disabled) { background: var(--accent-hover); }
 .btn--primary:active:not(:disabled) { background: var(--accent-active); transform: translateY(1px); }
 
-.btn--secondary { border-color: var(--border-strong); background: var(--surface); }
+.btn--secondary { border-color: var(--control-border); background: var(--surface); }
 .btn--secondary:hover:not(:disabled) { background: var(--surface-2); }
 
 .btn--ghost { background: transparent; color: var(--text-2); }
@@ -335,7 +351,7 @@ a:hover { color: var(--accent-hover); text-decoration: underline; }
 }
 .field input {
   width: 100%; height: var(--control-h); padding: 0 12px;
-  border: 1px solid var(--border-strong); border-radius: var(--r-control);
+  border: 1px solid var(--control-border); border-radius: var(--r-control);
   background: var(--surface); color: var(--text); font-size: var(--fs-sm);
 }
 .field input::placeholder { color: var(--text-muted); }
@@ -452,8 +468,12 @@ table.data th {
   background: var(--surface-2); border-bottom: 1px solid var(--border);
   font-size: var(--fs-micro); line-height: var(--lh-micro); font-weight: var(--w-label);
   letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted);
-  text-align: left; white-space: nowrap; cursor: pointer; user-select: none;
+  text-align: left; white-space: nowrap; user-select: none;
 }
+table.data th[data-sort] { cursor: pointer; }
+table.data th[data-sort]:hover { color: var(--text); }
+table.data th[aria-sort] { color: var(--text); }
+.sortmark { display: inline-block; width: 10px; margin-left: 3px; opacity: .8; }
 table.data th.is-num { text-align: right; }
 table.data th[aria-sort] { color: var(--text); }
 table.data td {
@@ -481,7 +501,7 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
 /* Checkbox */
 .check {
   appearance: none; width: 16px; height: 16px; margin: 0;
-  border: 1.5px solid var(--border-strong); border-radius: var(--r-chip);
+  border: 1.5px solid var(--control-border); border-radius: var(--r-chip);
   background: var(--surface); cursor: pointer; display: grid; place-content: center;
 }
 .check:checked, .check:indeterminate { background: var(--accent); border-color: var(--accent); }
@@ -564,7 +584,7 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
   color: var(--text-2); font-size: var(--fs-md); font-weight: var(--w-label);
 }
 .nav__item:hover { background: var(--surface-2); color: var(--text); text-decoration: none; }
-.nav__item[aria-current="page"] { background: var(--accent-soft); color: var(--accent); }
+.nav__item[aria-current="page"] { background: var(--accent-soft); color: var(--accent-strong); }
 .nav__count { margin-left: auto; font-size: var(--fs-xs); color: var(--text-muted); font-variant-numeric: tabular-nums; }
 .rail__foot {
   margin-top: auto; padding: var(--sp-3);
@@ -628,6 +648,28 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
   .rail__foot { margin-top: 0; margin-left: auto; padding: 0; }
   .rail__foot .concept { display: none; }
   .view, .topbar { padding-left: var(--sp-5); padding-right: var(--sp-5); }
+}
+
+/* Narrow screens: the table becomes a list of cards */
+@media (max-width: 720px) {
+  table.data thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  table.data, table.data tbody, table.data tr, table.data td { display: block; width: 100%; }
+  table.data tr {
+    padding: var(--sp-4) var(--sp-5);
+    border-bottom: 1px solid var(--border);
+  }
+  table.data td {
+    height: auto; padding: 3px 0; border: 0; white-space: normal;
+    display: grid; grid-template-columns: 8.5rem 1fr; gap: var(--sp-4); align-items: baseline;
+  }
+  table.data td::before {
+    content: attr(data-label);
+    font-size: var(--fs-micro); font-weight: var(--w-label);
+    letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted);
+  }
+  table.data td.is-num { text-align: left; }
+  table.data td:empty { display: none; }
+  .tablewrap { overflow-x: visible; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -734,7 +776,7 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
   position: absolute; translate: -50% -50%;
   display: inline-flex; align-items: center; justify-content: center;
   width: 26px; height: 26px; border-radius: 50%;
-  background: var(--surface); border: 1px solid var(--border-strong);
+  background: var(--surface); border: 1px solid var(--control-border);
   box-shadow: var(--shadow-card);
   font-size: var(--fs-micro); font-weight: var(--w-strong); font-variant-numeric: tabular-nums;
 }
@@ -757,7 +799,7 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
 .chain__node--pending { background: var(--surface); color: var(--text-muted); border: 1.5px dashed var(--border-strong); }
 .chain__name { margin-top: var(--sp-3); font-size: var(--fs-xs); font-weight: var(--w-label); text-align: center; }
 .chain__meta { margin-top: 2px; font-size: var(--fs-micro); line-height: 15px; text-align: center; color: var(--text-muted); }
-.chain__meta--accent { color: var(--accent); }
+.chain__meta--accent { color: var(--accent-strong); }
 .chain__meta--bad { color: var(--bad-fg); }
 
 /* --- Vehicles toolbar ---------------------------------------------------- */
@@ -1002,7 +1044,7 @@ table.data tbody tr.is-idle:hover { background: transparent; }
   --b-ink: var(--text);
   --b-ink-2: var(--text-2);
   --b-muted: var(--text-muted);
-  --b-accent: var(--accent);
+  --b-accent: var(--accent-strong);
   --b-wash: var(--accent-soft);
 
   max-width: 61rem;
@@ -1149,7 +1191,7 @@ table.data tbody tr.is-idle:hover { background: transparent; }
 }
 .coach__eyebrow {
   font-size: var(--fs-micro); font-weight: var(--w-label);
-  letter-spacing: .1em; text-transform: uppercase; color: var(--accent);
+  letter-spacing: .1em; text-transform: uppercase; color: var(--accent-strong);
 }
 .coach__text { font-size: var(--fs-lg); line-height: 1.35; font-weight: var(--w-strong); letter-spacing: -.01em; }
 .coach__sub { font-size: var(--fs-sm); color: var(--text-2); }
@@ -1161,7 +1203,7 @@ table.data tbody tr.is-idle:hover { background: transparent; }
 .nudge {
   display: inline-flex; align-items: center; gap: var(--sp-3);
   height: 26px; padding: 0 6px 0 10px; border-radius: var(--r-pill);
-  background: var(--accent-soft); color: var(--accent);
+  background: var(--accent-soft); color: var(--accent-strong);
   border: 1px solid var(--accent-border);
   font-size: var(--fs-xs); font-weight: var(--w-label); white-space: nowrap;
 }
@@ -1205,6 +1247,7 @@ table.data tbody tr.is-idle:hover { background: transparent; }
   <symbol id="i-inbox" viewBox="0 0 16 16"><path d="M2 9.4 3.6 3.2h8.8L14 9.4v3.4H2z"/><path d="M2 9.4h3.4a2.6 2.6 0 0 0 5.2 0H14"/></symbol>
 </defs></svg>
 
+<a class="skip" href="#view">Skip to content</a>
 <div class="app">
   <aside class="rail">
     <a class="brand" href="#/overview">
@@ -1692,7 +1735,8 @@ const Store = {
       trips: buildTrips(vehicles, drivers),
       ui: { scope: "own", tab: "all", q: "", corridor: null, docFilter: null, selected: null, page: 0,
             assign: { tripRef: null, vehicleId: null, driverId: null, showAll: false, done: null },
-            drawer: { vehicleId: null, tab: "overview", returnTo: null }, tripTab: "active", maintFilter: null },
+            drawer: { vehicleId: null, tab: "overview", returnTo: null }, tripTab: "active", maintFilter: null,
+            sort: { key: "plate", dir: "asc" }, loading: false },
     };
     return this;
   },
@@ -1700,6 +1744,14 @@ const Store = {
   subscribe(fn) { this.listeners.add(fn); },
   emit() { this.listeners.forEach(fn => fn()); },
   ui(patch) { Object.assign(this.state.ui, patch); this.emit(); },
+
+  /** Reordering the table shows a brief skeleton; typing does not. */
+  uiSlow(patch) {
+    Object.assign(this.state.ui, patch, { loading: true });
+    this.emit();
+    clearTimeout(this._slow);
+    this._slow = setTimeout(() => { this.state.ui.loading = false; this.emit(); }, 280);
+  },
 
   /** Snapshot the data (never the UI), mutate, notify. */
   commit(label, mutate) {
@@ -1855,9 +1907,28 @@ const S = {
       const q = u.q.trim().toLowerCase();
       list = list.filter(v => (v.plate + " " + (v.driver || "") + " " + v.model + " " + (v.carrier || "")).toLowerCase().includes(q));
     }
-    return list;
+    return S.sortVehicles(list);
   },
   scopeCount: sc => S.all().filter(v => v.ownership === sc).length,
+
+  /** Ordering is a selector, not a view detail. */
+  sortVehicles(list) {
+    const { key, dir } = Store.state.ui.sort;
+    const rank = { available: 0, on_trip: 1, maintenance: 2, out_of_service: 3 };
+    const docRank = { expired: 0, expiring: 1, valid: 2, not_required: 3 };
+    const maintRank = { overdue: 0, due: 1, scheduled: 2, serviced: 3 };
+    const val = v => key === "plate" ? v.plate
+      : key === "driver" ? (v.driver || "\uffff")
+      : key === "status" ? rank[v.status]
+      : key === "maint" ? maintRank[v.maint.state]
+      : key === "docs" ? docRank[v.docs.state]
+      : key === "km" ? v.km : v.plate;
+    const out = [...list].sort((a, b) => {
+      const x = val(a), y = val(b);
+      return typeof x === "number" ? x - y : String(x).localeCompare(String(y), "tr");
+    });
+    return dir === "desc" ? out.reverse() : out;
+  },
 
   /* --- Trips and drivers ------------------------------------------------ */
   trips: () => Store.state.trips,
@@ -1983,12 +2054,14 @@ const Prefs = {
     const b = document.getElementById("theme-btn");
     b.innerHTML = ico(v === "dark" ? "sun" : "moon", "ico ico--sm");
     b.setAttribute("aria-label", v === "dark" ? "Switch to light theme" : "Switch to dark theme");
+    b.setAttribute("aria-pressed", String(v === "dark"));
   },
   applyDensity(v) {
     this.density = v;
     document.documentElement.dataset.density = v;
-    document.getElementById("density-btn")
-      .setAttribute("aria-label", v === "compact" ? "Switch to comfortable rows" : "Switch to compact rows");
+    const b = document.getElementById("density-btn");
+    b.setAttribute("aria-label", v === "compact" ? "Switch to comfortable rows" : "Switch to compact rows");
+    b.setAttribute("aria-pressed", String(v === "compact"));
   },
   init() {
     this.applyTheme(this.read("mt-theme", matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
@@ -2242,7 +2315,7 @@ function mapPanel(storyTrip) {
       <span class="card__title">Corridors</span>
       <span class="u-xs u-muted tnum">${S.activeTrips().length} on the road · ${late} late</span>
       <button class="btn btn--ghost btn--sm btn--icon" type="button" data-sim
-              aria-label="${Sim.running ? "Pause live tracking" : "Resume live tracking"}">
+              aria-pressed="${Sim.running}" aria-label="${Sim.running ? "Pause live tracking" : "Resume live tracking"}">
         ${ico(Sim.running ? "pause" : "play", "ico ico--sm")}</button>
     </div>
     <div class="map" id="map">${mapSvg()}${mapMarkersHtml()}</div>
@@ -2368,7 +2441,7 @@ views.overview = () => {
       <span class="chain__line" style="${i === 0 ? "left:50%;right:0" : i === 5 ? "left:0;right:50%" : "left:0;right:0"};
         background:${state === "done" || state === "current" ? "var(--ok-fg)" : "var(--border-strong)"}"></span>
       <span class="chain__node chain__node--${state}">${ico(icn, "ico ico--sm")}</span>
-      <span class="chain__name">${name}</span>
+      <span class="chain__name">${term(name)}</span>
       <span class="chain__meta${tone ? " chain__meta--" + tone : ""}">${meta}</span>
     </div>`).join("");
 
@@ -2450,26 +2523,45 @@ views.vehicles = () => {
     u.maintFilter && ["maintFilter", "Service: due"],
   ].filter(Boolean);
 
+  if (u.loading) {
+    return `
+    <div class="u-col" style="gap:var(--sp-5)">
+      <div class="skel" style="height:20px;width:18rem"></div>
+      <div class="panel">
+        <div class="toolbar"><div class="skel" style="height:22px;width:22rem"></div></div>
+        <div class="filters"><div class="skel" style="height:32px;width:16rem"></div></div>
+        ${Array.from({ length: 8 }, () => `<div style="padding:var(--row-py) var(--row-px);border-bottom:1px solid var(--border)">
+          <div class="skel" style="height:14px;width:${60 + Math.round(rnd() * 30)}%"></div></div>`).join("")}
+      </div>
+    </div>`;
+  }
+
   const body = rows.length ? `
     <div class="tablewrap">
       <table class="data" role="grid">
         <thead><tr>
           <th style="width:36px"><span class="sr-only">Select</span></th>
-          <th>Plate</th><th>Driver · vehicle</th><th>Status</th>
-          <th>Maintenance</th><th>Documents</th><th class="is-num">Odometer</th>
+          ${[["plate","Plate",""],["driver","Driver · vehicle",""],["status","Status",""],
+              ["maint","Maintenance",""],["docs","Documents",""],["km","Odometer","is-num"]]
+            .map(([k,label,cls]) => {
+              const on = u.sort.key === k;
+              const dir = on ? u.sort.dir : null;
+              return `<th class="${cls}" data-sort="${k}" ${on ? `aria-sort="${dir === "asc" ? "ascending" : "descending"}"` : ""}
+                       tabindex="0" role="columnheader">${label}<span class="sortmark">${on ? (dir === "asc" ? "↑" : "↓") : ""}</span></th>`;
+            }).join("")}
         </tr></thead>
         <tbody>
           ${rows.map(v => `
             <tr data-vehicle="${v.id}" tabindex="0" aria-selected="${u.selected === v.id}">
-              <td><input class="check" type="checkbox" data-select="${v.id}" ${u.selected === v.id ? "checked" : ""}
+              <td data-label="Select"><input class="check" type="checkbox" data-select="${v.id}" ${u.selected === v.id ? "checked" : ""}
                          aria-label="Select ${esc(v.plate)}"></td>
-              <td><span class="identifier" style="color:var(--text)">${esc(v.plate)}</span></td>
-              <td><span class="cell-2"><b class="u-truncate">${esc(v.driver || "—")}</b>
+              <td data-label="Plate"><span class="identifier" style="color:var(--text)">${esc(v.plate)}</span></td>
+              <td data-label="Driver"><span class="cell-2"><b class="u-truncate">${esc(v.driver || "—")}</b>
                   <span class="u-truncate">${esc(v.model)}${v.carrier ? " · " + esc(v.carrier) : ""}</span></span></td>
-              <td>${chip(T_STATUS[v.status])}</td>
-              <td>${chip(T_MAINT[v.maint.state](v.maint))}</td>
-              <td>${chip(T_DOCS[v.docs.state](v.docs))}</td>
-              <td class="is-num">${nfmt(v.km)}</td>
+              <td data-label="Status">${chip(T_STATUS[v.status])}</td>
+              <td data-label="Maintenance">${chip(T_MAINT[v.maint.state](v.maint))}</td>
+              <td data-label="Documents">${chip(T_DOCS[v.docs.state](v.docs))}</td>
+              <td class="is-num" data-label="Odometer">${nfmt(v.km)}</td>
             </tr>`).join("")}
         </tbody>
       </table>
@@ -2684,15 +2776,15 @@ views.drivers = () => {
     const pct = Math.min(100, Math.round(d.minutesLeft / 540 * 100));
     return `
     <tr ${v ? `data-driverrow="${v.id}" tabindex="0"` : 'class="is-idle"'}>
-      <td><span class="cell-2"><b>${esc(d.name)}</b><span>${d.nationality}</span></span></td>
-      <td>${d.licences.map(l => `<span class="chip ${l.days <= 60 ? "chip--warn" : "chip--outline"}">${esc(l.type)}</span>`).join(" ")}</td>
-      <td style="min-width:150px">
+      <td data-label="Driver"><span class="cell-2"><b>${esc(d.name)}</b><span>${d.nationality}</span></span></td>
+      <td data-label="Licences">${d.licences.map(l => `<span class="chip ${l.days <= 60 ? "chip--warn" : "chip--outline"}">${term(l.type)}</span>`).join(" ")}</td>
+      <td data-label="Hours left" style="min-width:150px">
         <div class="hoursbar"><span style="width:${pct}%;background:var(--${hoursSem(d.minutesLeft)}-fg)"></span></div>
         <span class="u-micro u-muted tnum">${hm(d.minutesLeft)} of 9h left</span>
       </td>
-      <td>${v ? chip(T_STATUS[v.status]) : `<span class="chip chip--quiet">${ico("dash", "ico ico--sm")}On the bench</span>`}</td>
-      <td>${v ? `<span class="identifier">${esc(v.plate)}</span>` : "—"}</td>
-      <td>
+      <td data-label="Status">${v ? chip(T_STATUS[v.status]) : `<span class="chip chip--quiet">${ico("dash", "ico ico--sm")}On the bench</span>`}</td>
+      <td data-label="Vehicle">${v ? `<span class="identifier">${esc(v.plate)}</span>` : "—"}</td>
+      <td data-label="Tacho">
         <span class="chip chip--${tachoSem(d.tachoDaysAgo)} has-tip"
               data-tip="Driver cards must be downloaded at least every 28 days and kept for a year.">
           ${ico(tachoSem(d.tachoDaysAgo) === "ok" ? "check-circle" : "clock", "ico ico--sm")}${d.tachoDaysAgo}d ago</span>
@@ -2718,7 +2810,7 @@ views.drivers = () => {
 
     <div class="panel">
       <div class="toolbar"><div><div class="card__title">On duty</div>
-        <div class="card__hint">${onDuty.length} drivers with a truck · 9h is the daily AETR driving limit</div></div></div>
+        <div class="card__hint">${onDuty.length} drivers with a truck · nine hours is the daily ${term("AETR")} driving limit</div></div></div>
       ${table(onDuty)}
     </div>
 
@@ -2744,6 +2836,22 @@ views.maintenance = () => views.vehicles();
    The whole demo turns on this screen.
    ========================================================================= */
 const CHECK_ICON = { ok: "check-circle", warn: "clock", bad: "x-circle" };
+
+const GLOSSARY = {
+  "AETR": "European agreement on driving hours: nine hours of driving a day, ten twice a week.",
+  "ADR": "European agreement on carrying dangerous goods. Vehicle and driver both need the certificate.",
+  "O-Licence": "UK operator licence. Without it the vehicle cannot run commercially in Britain.",
+  "MOT": "The annual UK roadworthiness test.",
+  "Muayene": "Türkiye's periodic vehicle inspection.",
+  "K1 Yetki Belgesi": "Türkiye's carrier authorisation for domestic haulage for hire.",
+  "Tacho calibration": "Tachograph units must be recalibrated every two years.",
+  "Ro-Ro": "Roll-on roll-off ferry: the truck drives on and off, no crane, no unloading.",
+  "T1": "The transit document that moves non-EU goods across the EU without duty falling due.",
+  "SRC": "Türkiye's professional driver competence certificate.",
+  "Driver CPC": "UK and EU driver certificate of professional competence: 35 hours of training every five years.",
+};
+const term = t => GLOSSARY[t]
+  ? `<span class="tip" data-tip="${GLOSSARY[t]}" tabindex="0">${t}</span>` : t;
 
 function assignState() { return Store.state.ui.assign; }
 function setAssign(patch) { Store.ui({ assign: { ...assignState(), ...patch } }); }
@@ -2846,7 +2954,7 @@ views.assign = () => {
       ${isSel ? `<div class="checks">${checks.map(c => `
         <div class="check-row">
           <span class="check-row__ico check-row__ico--${c.level}">${ico(CHECK_ICON[c.level], "ico ico--sm")}</span>
-          <span class="check-row__name">${esc(c.name)}</span>
+          <span class="check-row__name">${term(c.name.replace(" certificate", ""))}${c.name.endsWith(" certificate") ? " certificate" : ""}</span>
           <span class="u-grow">
             <span class="check-row__why">${esc(c.why)}</span>
             ${c.act ? `<span class="check-row__fix">
@@ -2934,7 +3042,7 @@ function drawerTab(v, tab) {
     return v.documents.map(d => `
       <div class="doc">
         <span class="u-grow">
-          <span class="doc__name">${esc(d.type)}</span><br>
+          <span class="doc__name">${term(d.type)}</span><br>
           <span class="doc__ref">${esc(d.ref)} · until ${d.validUntil}</span>
         </span>
         ${docChip(d)}
@@ -3092,7 +3200,7 @@ function closeDrawer() {
    quote a number the demo has stopped showing.
    ========================================================================= */
 views.about = () => `
-<article class="brief">
+<article class="brief" lang="tr">
 
   <header class="masthead">
     <span class="eyebrow">Ürün notu · Yeni modül</span>
@@ -3505,7 +3613,7 @@ document.addEventListener("click", e => {
   }
 
   const scope = hit("[data-scope]");
-  if (scope) return Store.ui({ scope: scope.dataset.scope, page: 0, selected: null });
+  if (scope) return Store.uiSlow({ scope: scope.dataset.scope, page: 0, selected: null });
 
   const tTab = hit("[data-triptab]");
   if (tTab) return Store.ui({ tripTab: tTab.dataset.triptab });
@@ -3516,8 +3624,15 @@ document.addEventListener("click", e => {
   const dRow = hit("[data-driverrow]");
   if (dRow) return openDrawer(dRow.dataset.driverrow, `[data-driverrow="${dRow.dataset.driverrow}"]`);
 
+  const sortTh = hit("[data-sort]");
+  if (sortTh) {
+    const key = sortTh.dataset.sort;
+    const cur = Store.state.ui.sort;
+    return Store.uiSlow({ sort: { key, dir: cur.key === key && cur.dir === "asc" ? "desc" : "asc" } });
+  }
+
   const tab = hit("[data-tab]");
-  if (tab) return Store.ui({ tab: tab.dataset.tab, page: 0 });
+  if (tab) return Store.uiSlow({ tab: tab.dataset.tab, page: 0 });
 
   const clear = hit("[data-clear]");
   if (clear) {
@@ -3529,9 +3644,9 @@ document.addEventListener("click", e => {
   if (filter) {
     if (filter.dataset.filter === "corridor") {
       const order = [null, "TR → UK", "TR → DE", "TR → NL"];
-      return Store.ui({ corridor: order[(order.indexOf(Store.state.ui.corridor) + 1) % order.length] });
+      return Store.uiSlow({ corridor: order[(order.indexOf(Store.state.ui.corridor) + 1) % order.length] });
     }
-    return Store.ui({ docFilter: Store.state.ui.docFilter ? null : "expiring" });
+    return Store.uiSlow({ docFilter: Store.state.ui.docFilter ? null : "expiring" });
   }
 
   const startAssign = hit("[data-assign-start]");
@@ -3648,6 +3763,25 @@ document.addEventListener("keydown", e => {
 
   const card = e.target.closest?.("[data-vehicle],[data-rank],[data-triprow],[data-driverrow]");
   if (card && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); return card.click(); }
+  const th = e.target.closest?.("th[data-sort]");
+  if (th && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); return th.click(); }
+
+  /* Tabs behave like tabs: arrows move, Home and End jump. */
+  const inTablist = e.target.closest?.('[role="tablist"]');
+  if (inTablist && /^(ArrowLeft|ArrowRight|Home|End)$/.test(e.key)) {
+    const tabs = [...inTablist.querySelectorAll('[role="tab"]')];
+    const i = tabs.indexOf(e.target);
+    if (i > -1) {
+      e.preventDefault();
+      const next = e.key === "Home" ? 0
+        : e.key === "End" ? tabs.length - 1
+        : (i + (e.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
+      tabs[next].focus();
+      tabs[next].click();
+    }
+    return;
+  }
+
   if (e.key === "/" && !/^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName)) {
     const box = document.querySelector('[data-role="search"]');
     if (box) { e.preventDefault(); box.focus(); box.select(); }
