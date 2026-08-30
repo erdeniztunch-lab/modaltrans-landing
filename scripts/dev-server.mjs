@@ -5,7 +5,8 @@ import { dirname, join, extname } from "node:path";
 import { wrap } from "./wrap.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const SRC = join(root, "fleet-management-demo.html");
+const LANDING = join(root, "landing.html");
+const DEMO = join(root, "fleet-management-demo.html");
 const DIST = join(root, "public");
 
 const dist = process.argv.includes("--dist");
@@ -17,24 +18,44 @@ const MIME = {
   ".svg": "image/svg+xml", ".png": "image/png", ".woff2": "font/woff2", ".ttf": "font/ttf",
 };
 
+/** In dev the landing borrows the demo's embedded font, exactly as the build does. */
+async function landingFragment() {
+  const demo = await readFile(DEMO, "utf8");
+  const face = demo.match(/@font-face\{[\s\S]*?\}/);
+  const src = await readFile(LANDING, "utf8");
+  return src.replace("/*__FONT__*/", face ? face[0] : "");
+}
+
+const isDemo = url => url === "/demo" || url === "/demo/" || url === "/demo/index.html";
+const isRoot = url => url === "/" || url === "/index.html";
+
 const server = createServer(async (req, res) => {
   const url = (req.url || "/").split("?")[0];
 
-  /* The page polls this; when the mtime changes it reloads itself. */
+  /* The page polls this; when either source changes it reloads itself. */
   if (url === "/__v") {
-    const { mtimeMs } = await stat(dist ? join(DIST, "index.html") : SRC);
+    const [a, b] = await Promise.all([stat(LANDING), stat(DEMO)]);
     res.writeHead(200, { "content-type": "text/plain", "cache-control": "no-store" });
-    return res.end(String(mtimeMs));
+    return res.end(String(a.mtimeMs + b.mtimeMs));
   }
 
   try {
-    if (url === "/" || url === "/index.html") {
-      const html = dist
-        ? await readFile(join(DIST, "index.html"), "utf8")
-        : wrap(await readFile(SRC, "utf8"), { dev: true });
+    if (isRoot(url) || isDemo(url)) {
+      const wantsDemo = isDemo(url);
+      let html;
+      if (dist) {
+        html = await readFile(join(DIST, wantsDemo ? "demo/index.html" : "index.html"), "utf8");
+      } else {
+        const fragment = wantsDemo ? await readFile(DEMO, "utf8") : await landingFragment();
+        html = wrap(fragment, { dev: true, colorScheme: wantsDemo ? "light dark" : "light" });
+        /* the artifact URL only makes sense once published */
+        if (!wantsDemo) html = html.replace(
+          /(<a[^>]*\bdata-demo-link\b[^>]*\bhref=")https:\/\/claude\.ai\/code\/artifact\/[0-9a-f-]+(")/g, "$1/demo/$2");
+      }
       res.writeHead(200, { "content-type": MIME[".html"], "cache-control": "no-store" });
       return res.end(html);
     }
+
     const file = join(dist ? DIST : root, url);
     if (!file.startsWith(dist ? DIST : root)) throw new Error("outside root");
     const body = await readFile(file);
@@ -42,12 +63,13 @@ const server = createServer(async (req, res) => {
     res.end(body);
   } catch {
     res.writeHead(404, { "content-type": MIME[".html"] });
-    res.end("<h1>404</h1><p>Try <a href='/'>/</a>.</p>");
+    res.end('<h1>404</h1><p><a href="/">Landing</a> · <a href="/demo/">Demo</a></p>');
   }
 });
 
 server.listen(port, () => {
-  console.log(`\n  Modaltrans Fleet — ${dist ? "preview of public/" : "dev"}\n`);
-  console.log(`  http://localhost:${port}\n`);
-  if (!dist) console.log("  Editing fleet-management-demo.html reloads the page.\n");
+  console.log(`\n  Fleet Management — ${dist ? "preview of public/" : "dev"}\n`);
+  console.log(`  http://localhost:${port}/        landing`);
+  console.log(`  http://localhost:${port}/demo/   app\n`);
+  if (!dist) console.log("  Editing either source reloads the page.\n");
 });

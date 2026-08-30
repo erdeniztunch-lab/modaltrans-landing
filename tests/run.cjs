@@ -18,6 +18,7 @@ const SUITES = [
   ["guided-tour.cjs",        "five steps, copy from data, clean rollback"],
   ["polish-and-a11y.cjs",    "sorting, skeletons, mobile cards, glossary"],
   ["cta-clarity.cjs",        "every control names the screen or change it makes"],
+  ["landing.cjs",            "the landing page only claims what the demo does"],
   ["audit.cjs",              "cross-cutting audit for data contradictions"],
   ["audit-full.cjs",         "whole-app sweep: stress, wiring, dead code"],
   ["contrast.cjs",           "WCAG contrast across both themes"],

@@ -10,7 +10,7 @@ the customer.
 ## Run it
 
 ```bash
-npm run dev        # http://localhost:5173 — reloads when the source changes
+npm run dev        # / is the landing page, /demo/ is the app; both live-reload
 npm test           # 316 checks across nine suites
 npm run build      # writes public/index.html
 npm run preview    # build, then serve public/ exactly as it deploys
@@ -30,12 +30,14 @@ vercel --prod     # production
 Or connect the GitHub repo in the Vercel dashboard — it picks up `buildCommand`
 and `outputDirectory` from `vercel.json`.
 
-Only `public/` is published. The research and design documents stay in the repo.
+Only `public/` is published — `index.html` is the landing page, `demo/index.html` is
+the app. The research and design documents stay in the repo.
 
 ## Layout
 
 | Path | What |
 |---|---|
+| `landing.html` | The page that explains the module before you open it |
 | `fleet-management-demo.html` | The whole app — one file, vanilla JS, no framework |
 | `scripts/build.mjs` | Wraps the fragment into a complete HTML document |
 | `scripts/dev-server.mjs` | Zero-dependency static server with live reload |
@@ -78,6 +80,8 @@ functions against a small DOM stub, then prints one line per assertion.
 | `guided-tour` | Five steps, copy drawn from data, clean rollback |
 | `polish-and-a11y` | Sorting, skeletons, mobile cards, the glossary |
 | `audit` | Cross-cutting sweep for data contradictions |
+| `cta-clarity` | Every control names the screen or the change it makes |
+| `landing` | Every figure on the landing page is read back out of the demo and compared |
 | `contrast` | WCAG contrast for every token pair, in both themes |
 
 The audit suite exists because two defects got through review that reading could not catch:

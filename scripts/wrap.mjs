@@ -1,20 +1,18 @@
 /**
- * The demo is authored as an Artifact-style fragment: <title>, <style>, markup,
+ * Both pages are authored as Artifact-style fragments: <title>, <style>, markup,
  * <script> — no <!doctype>, no <html>, no <head>. That is what the Artifact
- * runtime expects, and it stays publishable as-is.
+ * runtime expects, and it keeps them publishable as-is.
  *
  * A real deployment needs a complete document, otherwise the browser renders in
- * quirks mode. This lifts the title and styles into a proper <head> and leaves
- * the rest in <body>.
+ * quirks mode. This lifts the title, links and styles into a proper <head> and
+ * leaves the rest in <body>.
  */
 
-const FAVICON =
-  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E" +
-  "%3Ctext y='.9em' font-size='90'%3E%F0%9F%9A%9A%3C/text%3E%3C/svg%3E";
-
-const DESCRIPTION =
-  "A concept for the Fleet Management module Modaltrans lists as coming soon: " +
-  "assign a truck to a road leg, clear the compliance blockers, file U-ETDS and cost the trip in one step.";
+const emojiFavicon = glyph =>
+  "data:image/svg+xml," +
+  encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">${glyph}</text></svg>`
+  );
 
 /** Injected only by `npm run dev` — polls for changes and reloads. */
 const LIVE_RELOAD = `
@@ -33,15 +31,17 @@ const LIVE_RELOAD = `
 })();
 </script>`;
 
-export function wrap(fragment, { dev = false } = {}) {
-  const title = (fragment.match(/<title>([\s\S]*?)<\/title>/) || [, "Modaltrans Fleet"])[1].trim();
+export function wrap(fragment, { dev = false, description = "", favicon = "🚚", colorScheme = "light dark" } = {}) {
+  const title = (fragment.match(/<title>([\s\S]*?)<\/title>/) || [, "Fleet Management"])[1].trim();
 
   /* <link> and <style> belong in the head; everything else is the body. */
   const head = [];
-  let body = fragment
+  const body = fragment
     .replace(/<title>[\s\S]*?<\/title>\s*/i, "")
     .replace(/<link\b[^>]*>\s*/gi, m => { head.push(m); return ""; })
     .replace(/<style>[\s\S]*?<\/style>\s*/gi, m => { head.push(m); return ""; });
+
+  const esc = s => String(s).replace(/"/g, "&quot;");
 
   return `<!doctype html>
 <html lang="en">
@@ -49,13 +49,13 @@ export function wrap(fragment, { dev = false } = {}) {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${title}</title>
-<meta name="description" content="${DESCRIPTION}">
-<meta name="color-scheme" content="light dark">
+<meta name="description" content="${esc(description)}">
+<meta name="color-scheme" content="${colorScheme}">
 <meta name="robots" content="noindex">
-<link rel="icon" href="${FAVICON}">
+<link rel="icon" href="${emojiFavicon(favicon)}">
 <meta property="og:type" content="website">
-<meta property="og:title" content="${title}">
-<meta property="og:description" content="${DESCRIPTION}">
+<meta property="og:title" content="${esc(title)}">
+<meta property="og:description" content="${esc(description)}">
 ${head.join("\n")}
 </head>
 <body>

@@ -1,0 +1,869 @@
+<title>Fleet Management</title>
+<style>
+/* ============================================================================
+   Landing page for the Fleet Management module.
+
+   Palette and type come from Modaltrans's own system. There is no motion on
+   this page: the compliance panel appears twice, locked and confirmed, and the
+   prose carries the difference between them.
+
+   Every figure below is read out of fleet-management-demo.html by
+   tests/landing.cjs — if the app changes and the page does not, the build fails.
+   ========================================================================= */
+
+/*__FONT__*/
+
+:root {
+  /* The page commits to one visual world, the way the design does. Declaring
+     the scheme keeps the host from painting a dark ground behind it. */
+  color-scheme: light;
+
+  /* raw scales, same source as the product */
+  --brand-500: oklch(0.6399 0.189 32.51);
+  --gray-050: oklch(0.985 0.002 264);
+  --gray-100: oklch(0.968 0.004 264);
+  --gray-200: oklch(0.928 0.006 264);
+  --gray-300: oklch(0.872 0.008 264);
+  --gray-500: oklch(0.596 0.014 264);
+  --gray-700: oklch(0.412 0.014 264);
+  --gray-900: oklch(0.238 0.010 264);
+  --gray-950: oklch(0.176 0.008 264);
+  --gray-990: oklch(0.132 0.008 264);
+
+  /* semantic roles — components read only these */
+  --bg: oklch(1 0 0);
+  --bg-2: var(--gray-050);
+  --surface: oklch(1 0 0);
+  --line-faint: oklch(0.955 0.004 264);
+  --line: oklch(0.912 0.006 264);
+  --line-2: oklch(0.878 0.008 264);
+  --line-strong: oklch(0.655 0.010 264);
+  --text: var(--gray-900);
+  --text-2: var(--gray-700);
+  --text-muted: oklch(0.555 0.014 264);
+  --accent: var(--brand-500);
+  --accent-strong: oklch(0.565 0.175 31.5);
+  --accent-hover: oklch(0.505 0.158 31);
+  --accent-soft: oklch(0.972 0.014 38);
+  --accent-border: oklch(0.885 0.062 36);
+  --on-accent: oklch(1 0 0);
+  --ink-panel: var(--gray-990);
+  --on-ink: var(--gray-100);
+  --on-ink-muted: oklch(0.652 0.012 264);
+
+  --ok-fg: oklch(0.498 0.114 158);  --ok-bg: oklch(0.955 0.038 160);  --ok-br: oklch(0.878 0.062 158);
+  --bad-fg: oklch(0.545 0.205 14);  --bad-bg: oklch(0.958 0.028 14);  --bad-br: oklch(0.878 0.058 14);
+  --warn-fg: oklch(0.508 0.118 74); --warn-bg: oklch(0.962 0.052 88); --warn-br: oklch(0.888 0.078 82);
+  --info-fg: oklch(0.512 0.132 248);--info-bg: oklch(0.958 0.032 248);--info-br: oklch(0.878 0.052 248);
+
+  /* the corridor panel is the one dark surface, so it carries its own set */
+  --ink-line: oklch(0.288 0.010 264);
+  --ink-rail: oklch(0.332 0.012 264);
+  --ink-rail-done: oklch(0.498 0.114 158);
+  --ink-node-pending-bg: oklch(0.196 0.009 264);
+  --ink-node-blocked-bg: oklch(0.312 0.076 12);
+  --ink-node-blocked-fg: oklch(0.842 0.148 14);
+  --ink-node-blocked-br: oklch(0.702 0.160 14);
+  --ink-ok-bg: oklch(0.288 0.052 160); --ink-ok-fg: oklch(0.788 0.132 158); --ink-ok-br: oklch(0.392 0.072 158);
+  --ink-bad-bg: oklch(0.312 0.076 12); --ink-bad-fg: oklch(0.802 0.148 14);  --ink-bad-br: oklch(0.462 0.114 12);
+
+  --shadow: 0 1px 2px oklch(0.238 0.01 264 / 0.05);
+  --focus: 0 0 0 2px var(--bg), 0 0 0 4px oklch(0.565 0.175 31.5 / 0.6);
+
+  --font: "General Sans", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --r-s: 6px; --r-m: 10px; --r-l: 14px;
+  --gutter: 40px;
+  --sec: 80px;
+  --measure: 34rem;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+h1, h2 { margin: 0; font-weight: 600; letter-spacing: -0.022em; text-wrap: pretty; }
+h1 { font-size: clamp(2.1rem, 5.2vw, 3.25rem); line-height: 1.06; max-width: 22ch; }
+h2 { font-size: clamp(1.55rem, 3.2vw, 2.05rem); line-height: 1.12; max-width: 24ch; }
+p  { margin: 0; max-width: var(--measure); }
+a  { color: var(--accent-strong); }
+svg { display: block; }
+:focus-visible { outline: none; box-shadow: var(--focus); border-radius: var(--r-s); }
+
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* ---------- shell ------------------------------------------------------- */
+
+.inner { max-width: 62rem; margin: 0 auto; padding: 0 var(--gutter); }
+.rule  { height: 1px; background: var(--line); border: 0; margin: 0; }
+section { padding: var(--sec) 0; }
+.hero  { padding-top: 64px; }
+
+.top {
+  display: flex; align-items: center; gap: 10px;
+  max-width: 62rem; margin: 0 auto; padding: 14px var(--gutter);
+  border-bottom: 1px solid var(--line);
+}
+.mark { width: 20px; height: 20px; border-radius: var(--r-s); background: var(--accent); flex: none; }
+.brandname { font-size: 14px; font-weight: 600; letter-spacing: -0.01em; }
+.vline { width: 1px; height: 14px; background: var(--line-2); flex: none; }
+.modname { font-size: 14px; color: var(--text-2); white-space: nowrap; }
+.spacer { flex: 1; }
+
+.chip {
+  display: inline-flex; align-items: center; height: 20px; padding: 0 7px;
+  border-radius: 4px; font-size: 11px; font-weight: 600; white-space: nowrap; flex: none;
+  background: var(--accent-soft); color: var(--accent-strong); border: 1px solid var(--accent-border);
+}
+.chip--ok  { background: var(--ok-bg);  color: var(--ok-fg);  border-color: var(--ok-br); }
+.chip--bad { background: var(--bad-bg); color: var(--bad-fg); border-color: var(--bad-br); }
+
+/* ---------- buttons ----------------------------------------------------- */
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 40px; padding: 0 18px; border-radius: var(--r-s);
+  font-family: inherit; font-size: 14px; font-weight: 500; text-decoration: none;
+  border: 1px solid transparent; white-space: nowrap; cursor: pointer;
+}
+.btn--primary { background: var(--accent-strong); color: var(--on-accent); border-color: var(--accent-strong); }
+.btn--primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+.ctarow { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
+
+/* ---------- hero -------------------------------------------------------- */
+
+.eyebrow {
+  font-size: 0.72rem; font-weight: 600; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--accent-strong);
+}
+.lead { margin-top: 16px; font-size: 16px; line-height: 1.55; color: var(--text-2); max-width: 30rem; }
+h1 { margin-top: 14px; }
+.sub { margin-top: 8px; font-size: 15px; line-height: 1.5; color: var(--text-muted); max-width: 30rem; }
+.note { margin-top: 14px; font-size: 13px; line-height: 19px; color: var(--text-muted); max-width: var(--measure); }
+
+.stats {
+  display: flex; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--line);
+}
+.stat { flex: 1; min-width: 0; padding-right: 16px; }
+.stat + .stat { padding-left: 20px; border-left: 1px solid var(--line); }
+.stat__v { font-size: 17px; line-height: 22px; font-weight: 600; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+.stat__l { font-size: 12px; line-height: 16px; color: var(--text-muted); margin-top: 2px; }
+
+/* ---------- compliance panel -------------------------------------------- */
+
+.caps { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+.caps__t { font-size: 12px; line-height: 18px; color: var(--text-muted); min-width: 0; }
+
+.panel {
+  display: flex; flex-wrap: wrap; margin-top: 0;
+  border: 1px solid var(--line-2); border-radius: var(--r-l);
+  background: var(--surface); overflow: hidden;
+}
+.panelwrap { margin-top: 28px; }
+.panel__main { flex: 1 1 340px; min-width: 0; display: flex; flex-direction: column; padding: 20px; }
+.panel__side {
+  flex: 0 0 232px; min-width: 0; padding: 20px;
+  background: var(--bg-2); border-left: 1px solid var(--line);
+}
+.panel__head {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding-bottom: 14px; border-bottom: 1px solid var(--line);
+}
+.plate { font-size: 15px; font-weight: 600; letter-spacing: 0.02em; font-variant-numeric: tabular-nums; }
+.plate__sub { font-size: 12px; line-height: 17px; color: var(--text-muted); margin-top: 2px; }
+.score { text-align: right; flex: none; }
+.score__v { font-size: 20px; line-height: 24px; font-weight: 600; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; color: var(--text-2); }
+.score--ok .score__v { color: var(--ok-fg); }
+.score__of { font-size: 11px; font-weight: 500; color: var(--text-muted); }
+.score__l { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; color: var(--text-muted); margin-top: 1px; }
+
+.checkcell {
+  display: grid; grid-template-columns: 15px 132px 1fr; align-items: center; gap: 10px;
+  padding: 8px 0; border-bottom: 1px solid var(--line-faint);
+}
+.checkcell__n { font-size: 13px; font-weight: 500; white-space: nowrap; }
+.checkcell__v { font-size: 12px; line-height: 16px; text-align: right; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.checkcell--bad  { background: var(--bad-bg); margin: 0 -12px; padding-left: 12px; padding-right: 12px; }
+.checkcell--bad .checkcell__v  { color: var(--bad-fg); }
+.checkcell--fixed { background: var(--ok-bg); margin: 0 -12px; padding-left: 12px; padding-right: 12px; }
+.checkcell--fixed .checkcell__v { color: var(--ok-fg); }
+.ico--ok  { color: var(--ok-fg); }
+.ico--bad { color: var(--bad-fg); }
+
+.fix { display: flex; align-items: center; gap: 12px; padding: 12px 0; }
+.fix__t { font-size: 12px; line-height: 17px; color: var(--text-2); flex: 1; min-width: 0; }
+.fix__b {
+  flex: none; height: 28px; padding: 0 12px; border-radius: var(--r-s);
+  font-family: inherit; font-size: 12px; font-weight: 500;
+  border: 1px solid var(--line-strong); background: var(--surface); color: var(--text); cursor: pointer;
+}
+.fix__b[disabled] { border-color: var(--ok-br); background: var(--ok-bg); color: var(--ok-fg); cursor: default; }
+
+.decide {
+  display: flex; align-items: center; gap: 12px;
+  padding-top: 14px; margin-top: auto; border-top: 1px solid var(--line);
+}
+.decide__m { flex: 1; min-width: 0; font-size: 12px; line-height: 17px; color: var(--text-2); }
+.decide__m--bad { color: var(--bad-fg); }
+.decide__b {
+  flex: none; height: 32px; padding: 0 14px; border-radius: var(--r-s);
+  font-family: inherit; font-size: 13px; font-weight: 500;
+  border: 1px solid var(--line); background: var(--line-faint); color: var(--line-strong); cursor: not-allowed;
+}
+.decide__b--done { border-color: var(--ok-br); background: var(--ok-bg); color: var(--ok-fg); cursor: default; }
+
+.sidehead {
+  font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+  font-weight: 600; color: var(--accent-strong); line-height: 15px;
+}
+.sidenote { font-size: 12px; line-height: 18px; color: var(--text-muted); margin-top: 12px; }
+.recs { display: flex; flex-direction: column; margin-top: 12px; }
+.rec { padding: 8px 0; border-bottom: 1px solid var(--line); }
+.rec:last-child { border-bottom: 0; }
+.rec__l { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; color: var(--text-muted); }
+.rec__t { font-size: 12px; line-height: 17px; margin-top: 1px; font-variant-numeric: tabular-nums; }
+
+.gate { margin-top: 18px; font-size: 12px; line-height: 20px; color: var(--text-muted); max-width: 46rem; }
+.gatename {
+  display: inline-block; padding: 0 6px; border-radius: 4px;
+  background: var(--bg-2); border: 1px solid var(--line);
+  color: var(--text-2); font-size: 11px; font-weight: 500; line-height: 18px;
+  white-space: nowrap; margin-right: 2px;
+}
+
+/* ---------- generic product box ----------------------------------------- */
+
+.box {
+  margin-top: 26px; border: 1px solid var(--line-2); border-radius: 12px;
+  overflow: hidden; background: var(--surface);
+}
+.box__head {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 10px 14px; background: var(--bg-2); border-bottom: 1px solid var(--line);
+  font-size: 13px; font-weight: 600;
+}
+.box__meta { font-size: 12px; font-weight: 400; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.box__meta--ok { color: var(--ok-fg); }
+.box__foot {
+  padding: 10px 14px; background: var(--bg-2); border-top: 1px solid var(--line);
+  font-size: 12px; color: var(--text-muted);
+}
+
+.arow {
+  display: grid; grid-template-columns: 88px 1fr 208px 40px; gap: 12px; align-items: center;
+  padding: 12px 14px; border-bottom: 1px solid var(--line-faint);
+}
+.arow:last-of-type { border-bottom: 0; }
+.arow__t { font-size: 13px; min-width: 0; }
+.arow__m { font-size: 12px; color: var(--text-muted); }
+.arow__n { font-size: 14px; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+.tag {
+  display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 4px;
+  font-size: 11px; font-weight: 600; white-space: nowrap; width: fit-content;
+}
+.tag--bad  { color: var(--bad-fg);  background: var(--bad-bg);  border: 1px solid var(--bad-br); }
+.tag--warn { color: var(--warn-fg); background: var(--warn-bg); border: 1px solid var(--warn-br); }
+.tag--info { color: var(--info-fg); background: var(--info-bg); border: 1px solid var(--info-br); }
+
+.recrow {
+  display: grid; grid-template-columns: 14px 92px 1fr; gap: 10px; align-items: center;
+  padding: 11px 14px; border-bottom: 1px solid var(--line-faint);
+}
+.recrow:last-of-type { border-bottom: 0; }
+.recrow__l { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; color: var(--text-muted); white-space: nowrap; }
+.recrow__t { font-size: 14px; font-variant-numeric: tabular-nums; min-width: 0; }
+
+.thead, .trow {
+  display: grid; grid-template-columns: 112px 1fr 100px 84px; gap: 12px; align-items: center;
+  padding: 12px 14px;
+}
+.thead {
+  padding: 9px 14px; background: var(--bg-2); border-bottom: 1px solid var(--line);
+  font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; color: var(--text-muted);
+}
+.thead span:last-child, .trow__s { text-align: right; }
+.trow { border-bottom: 1px solid var(--line-faint); }
+.trow:last-of-type { border-bottom: 0; }
+.trow__p { font-size: 13px; font-weight: 600; letter-spacing: 0.02em; font-variant-numeric: tabular-nums; }
+.trow__h { font-size: 12px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.trow__s { font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.own {
+  display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 4px;
+  font-size: 11px; font-weight: 500; width: fit-content; white-space: nowrap;
+  background: var(--bg-2); color: var(--text-2); border: 1px solid var(--line);
+}
+.own--sub { background: var(--surface); color: var(--text-muted); border: 1px dashed var(--line-strong); }
+.s--ok { color: var(--ok-fg); } .s--warn { color: var(--warn-fg); } .s--bad { color: var(--bad-fg); }
+
+/* ---------- corridor chain, always on ink -------------------------------- */
+
+.dark { margin-top: 26px; background: var(--ink-panel); border-radius: var(--r-l); padding: 32px 28px; }
+.chain { display: flex; align-items: flex-start; }
+.node { flex: 1; display: flex; flex-direction: column; align-items: center; position: relative; min-width: 0; }
+.node__line { position: absolute; top: 14px; left: 0; right: 0; height: 2px; z-index: 0; background: var(--ink-rail); }
+.node--done .node__line, .node--current .node__line { background: var(--ink-rail-done); }
+.node:first-child .node__line { left: 50%; }
+.node:last-child  .node__line { right: 50%; }
+.node__dot {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 50%; flex: none; position: relative; z-index: 1;
+  font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums;
+  background: var(--ink-node-pending-bg); color: var(--on-ink-muted); border: 1.5px dashed var(--ink-rail);
+}
+.node--done .node__dot { background: var(--ink-rail-done); color: var(--on-accent); border: 1px solid var(--ink-rail-done); }
+.node--current .node__dot { background: var(--accent); color: oklch(0.152 0.02 30); border: 1px solid var(--accent); }
+.node--blocked .node__dot {
+  background: var(--ink-node-blocked-bg); color: var(--ink-node-blocked-fg);
+  border: 1.5px solid var(--ink-node-blocked-br);
+}
+.node__txt { margin-top: 10px; text-align: center; min-width: 0; }
+.node__n { font-size: 13px; font-weight: 600; color: var(--on-ink); }
+.node__m { font-size: 11px; line-height: 16px; margin-top: 2px; color: var(--on-ink-muted); font-variant-numeric: tabular-nums; }
+.node--blocked .node__m { color: var(--ink-node-blocked-fg); }
+.node--current .node__m { color: oklch(0.852 0.09 45); }
+
+.decls {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  margin-top: 26px; padding-top: 22px; border-top: 1px solid var(--ink-line);
+}
+.decl {
+  display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 9px;
+  border-radius: 4px; font-size: 12px; font-weight: 500; white-space: nowrap;
+  background: var(--ink-ok-bg); color: var(--ink-ok-fg); border: 1px solid var(--ink-ok-br);
+}
+.decl--bad { background: var(--ink-bad-bg); color: var(--ink-bad-fg); border-color: var(--ink-bad-br); }
+.decl--off { background: transparent; color: var(--on-ink-muted); border: 1px dashed var(--ink-rail); }
+.decl__s { font-size: 11px; opacity: 0.72; }
+.decls__note { font-size: 12px; line-height: 17px; color: var(--on-ink-muted); flex: 1; min-width: 180px; }
+
+/* ---------- modules, value, the two lists -------------------------------- */
+
+.mods { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+.mod {
+  display: inline-flex; align-items: center; gap: 7px; height: 32px; padding: 0 12px;
+  border-radius: var(--r-s); font-size: 13px; font-weight: 500; white-space: nowrap;
+  background: var(--bg-2); color: var(--text-2); border: 1px solid var(--line);
+}
+.mod--this { background: var(--accent-soft); color: var(--text); border-color: var(--accent-border); }
+.dot { width: 6px; height: 6px; border-radius: 50%; flex: none; background: var(--line-2); }
+.mod--this .dot { background: var(--accent); }
+
+.vals { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 40px; margin-top: 26px; }
+.val { display: grid; grid-template-columns: 88px 1fr; gap: 14px; align-items: baseline; padding: 14px 0; border-bottom: 1px solid var(--line-faint); }
+.val__n { font-size: 22px; line-height: 26px; font-weight: 600; letter-spacing: -0.015em; font-variant-numeric: tabular-nums; }
+.val__t { font-size: 14px; line-height: 20px; color: var(--text-2); }
+
+
+.end {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 16px;
+}
+.end__c { min-width: 0; flex: 1; }
+.end__t { font-size: 16px; line-height: 23px; font-weight: 600; }
+.end__s { font-size: 13px; line-height: 19px; color: var(--text-muted); margin-top: 3px; }
+
+.foot {
+  display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+  max-width: 62rem; margin: 0 auto; padding: 20px var(--gutter);
+  font-size: 12px; color: var(--text-muted);
+}
+
+/* ---------- narrow ------------------------------------------------------- */
+
+@media (max-width: 860px) {
+  :root { --gutter: 20px; --sec: 52px; }
+  .hero { padding-top: 44px; }
+  .vline, .modname { display: none; }
+  .btn { height: 42px; }
+
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .stat, .stat + .stat { padding: 0; border-left: 0; }
+
+  .panel__main, .panel__side { padding: 16px; }
+  .panel__side { flex: 1 1 100%; border-left: 0; border-top: 1px solid var(--line); }
+  .checkcell { grid-template-columns: 15px 1fr; padding: 7px 0; }
+  .checkcell__v { grid-column: 2; text-align: left; margin-top: -4px; font-size: 11px; }
+
+  .arow { grid-template-columns: auto 1fr auto; }
+  .arow__m { display: none; }
+  .recrow { grid-template-columns: 14px 76px 1fr; }
+  .thead, .trow { grid-template-columns: 1fr auto auto; }
+  .thead span:nth-child(3), .trow__h { display: none; }
+
+  .dark { padding: 24px 20px; }
+  .chain { flex-direction: column; }
+  .node { flex: none; width: 100%; flex-direction: row; align-items: flex-start; gap: 12px; padding-bottom: 16px; }
+  .node:last-child { padding-bottom: 0; }
+  .node__line { top: 30px; bottom: 0; left: 14px; right: auto; width: 2px; height: auto; }
+  .node:first-child .node__line { left: 14px; }
+  .node:last-child .node__line { display: none; }
+  .node__txt { margin-top: 0; padding-top: 4px; text-align: left; }
+
+  .vals { grid-template-columns: 1fr; gap: 0; }
+  .val { grid-template-columns: 72px 1fr; }
+  .val__n { font-size: 20px; }
+}
+</style>
+
+<svg class="sr" aria-hidden="true">
+  <symbol id="i-pass" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="8" cy="8" r="6.2"></circle><polyline points="5.2,8.2 7.2,10.2 10.9,5.9"></polyline>
+  </symbol>
+  <symbol id="i-fail" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="8" cy="8" r="6.2"></circle><line x1="5.7" y1="5.7" x2="10.3" y2="10.3"></line><line x1="10.3" y1="5.7" x2="5.7" y2="10.3"></line>
+  </symbol>
+  <symbol id="i-tick" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="3,8.5 6.2,11.7 13,5"></polyline>
+  </symbol>
+</svg>
+
+<header class="top">
+  <span class="mark" aria-hidden="true"></span>
+  <span class="brandname">Modaltrans</span>
+  <span class="vline" aria-hidden="true"></span>
+  <span class="modname">Fleet Management</span>
+  <span class="chip">Concept build</span>
+</header>
+
+<main>
+
+  <!-- 1 · the thesis, with the locked panel underneath it ------------------ -->
+  <section class="hero">
+    <div class="inner">
+      <p class="eyebrow">Modaltrans module concept</p>
+      <h1>Promise loads you can actually deliver.</h1>
+      <p class="lead">Papers, service window and driving hours are checked as you assign.
+        One press updates the trip, the declaration, the cost and the customer.</p>
+
+      <div class="ctarow">
+        <a class="btn btn--primary" data-demo-link
+           href="https://claude.ai/code/artifact/6d55e897-55a3-4d7d-9580-1f4c3730d7c2">Open the demo</a>
+      </div>
+
+      <div class="panelwrap">
+        <div class="caps">
+          <span class="chip chip--bad">Locked</span>
+          <span class="caps__t">Ayhan Kurt is 5h 35m short for this leg. The fix sits on the failing row.</span>
+        </div>
+
+        <div class="panel">
+          <div class="panel__main">
+            <div class="panel__head">
+              <div style="min-width:0;flex:1">
+                <div class="plate">34 TR 5510</div>
+                <div class="plate__sub">Actros 1851 · reefer · load TR-4482, Gebze to Birmingham</div>
+              </div>
+              <div class="score">
+                <div class="score__v">84<span class="score__of">/100</span></div>
+                <div class="score__l">Readiness</div>
+              </div>
+            </div>
+
+            <div class="checkcell">
+              <svg class="ico--ok" width="15" height="15" aria-hidden="true"><use href="#i-pass"></use></svg>
+              <span class="checkcell__n">Vehicle status</span>
+              <span class="checkcell__v">Available</span>
+            </div>
+            <div class="checkcell">
+              <svg class="ico--ok" width="15" height="15" aria-hidden="true"><use href="#i-pass"></use></svg>
+              <span class="checkcell__n">ADR certificate</span>
+              <span class="checkcell__v">Valid — cleared for dangerous goods</span>
+            </div>
+            <div class="checkcell">
+              <svg class="ico--ok" width="15" height="15" aria-hidden="true"><use href="#i-pass"></use></svg>
+              <span class="checkcell__n">Documents</span>
+              <span class="checkcell__v">Valid</span>
+            </div>
+            <div class="checkcell">
+              <svg class="ico--ok" width="15" height="15" aria-hidden="true"><use href="#i-pass"></use></svg>
+              <span class="checkcell__n">Maintenance</span>
+              <span class="checkcell__v">Inside the service window</span>
+            </div>
+            <div class="checkcell checkcell--bad">
+              <svg class="ico--bad" width="15" height="15" aria-hidden="true"><use href="#i-fail"></use></svg>
+              <span class="checkcell__n">Driver hours</span>
+              <span class="checkcell__v">0h 45m remaining, leg requires 6h 20m</span>
+            </div>
+            <div class="checkcell">
+              <svg class="ico--ok" width="15" height="15" aria-hidden="true"><use href="#i-pass"></use></svg>
+              <span class="checkcell__n">Corridor</span>
+              <span class="checkcell__v">Already runs TR → UK</span>
+            </div>
+
+            <div class="fix">
+              <span class="fix__t">Murat Yılmaz is on the bench with 8h 09m.</span>
+              <button class="fix__b" type="button">Assign Murat Yılmaz</button>
+            </div>
+
+            <div class="decide">
+              <span class="decide__m decide__m--bad">Driver hours must clear before this load can be assigned.</span>
+              <button class="decide__b" type="button" disabled>Assign, locked</button>
+            </div>
+          </div>
+
+          <div class="panel__side">
+            <div class="sidehead">What the confirmation writes</div>
+            <p class="sidenote">Nothing is written while a check is failing. The six records
+              appear the moment the assignment goes through.</p>
+          </div>
+        </div>
+
+        <p class="gate">The gate holds seven checks:
+          <span class="gatename">Vehicle status</span><span class="gatename">ADR certificate</span><span class="gatename">Documents</span><span class="gatename">Maintenance</span><span class="gatename">Driver</span><span class="gatename">Driver hours</span><span class="gatename">Corridor</span>
+          Six of them run on this leg. Driver appears only when the truck has none, and ADR
+          only when the load carries dangerous goods.</p>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="stat__v">42</div><div class="stat__l">vehicles, own and subcontracted</div></div>
+        <div class="stat"><div class="stat__v">7</div><div class="stat__l">checks in the gate</div></div>
+        <div class="stat"><div class="stat__v">6</div><div class="stat__l">records per confirmation</div></div>
+        <div class="stat"><div class="stat__v">78%</div><div class="stat__l">utilisation, demo fleet</div></div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <!-- 2 · the same panel, one click later ---------------------------------- -->
+  <section>
+    <div class="inner">
+      <h2>Swap the driver, the button opens.</h2>
+      <p class="sub">Same screen, one click later. The demo runs this for real.</p>
+
+      <div class="panelwrap">
+        <div class="caps">
+          <span class="chip chip--ok">Confirmed</span>
+          <span class="caps__t">Readiness 100. Six records written, every one of them reversible.</span>
+        </div>
+
+        <div class="panel">
+          <div class="panel__main">
+            <div class="panel__head">
+              <div style="min-width:0;flex:1">
+                <div class="plate">34 TR 5510</div>
+                <div class="plate__sub">Actros 1851 · reefer · load TR-4482, Gebze to Birmingham</div>
+              </div>
+              <div class="score score--ok">
+                <div class="score__v">100<span class="score__of">/100</span></div>
+                <div class="score__l">Readiness</div>
+              </div>
+            </div>
+
+            <div class="checkcell">
+              <svg class="ico--ok" width="15" height="15" aria-hidden="true"><use href="#i-pass"></use></svg>
+              <span class="checkcell__n">Vehicle status</span>
+              <span class="checkcell__v">Available</span>
+            </div>
+            <div class="checkcell">
+              <svg class="ico--ok" width="15" height="15" aria-hidden="true"><use href="#i-pass"></use></svg>
+              <span class="checkcell__n">ADR certificate</span>
+              <span class="checkcell__v">Valid — cleared for dangerous goods</span>
+            </div>
+            <div class="checkcell">
+              <svg class="ico--ok" width="15" height="15" aria-hidden="true"><use href="#i-pass"></use></svg>
+              <span class="checkcell__n">Documents</span>
+              <span class="checkcell__v">Valid</span>
+            </div>
+            <div class="checkcell">
+              <svg class="ico--ok" width="15" height="15" aria-hidden="true"><use href="#i-pass"></use></svg>
+              <span class="checkcell__n">Maintenance</span>
+              <span class="checkcell__v">Inside the service window</span>
+            </div>
+            <div class="checkcell checkcell--fixed">
+              <svg class="ico--ok" width="15" height="15" aria-hidden="true"><use href="#i-pass"></use></svg>
+              <span class="checkcell__n">Driver hours</span>
+              <span class="checkcell__v">8h 09m remaining, leg requires 6h 20m</span>
+            </div>
+            <div class="checkcell">
+              <svg class="ico--ok" width="15" height="15" aria-hidden="true"><use href="#i-pass"></use></svg>
+              <span class="checkcell__n">Corridor</span>
+              <span class="checkcell__v">Already runs TR → UK</span>
+            </div>
+
+            <div class="fix">
+              <span class="fix__t">Driver swapped. Ayhan Kurt keeps his rest window.</span>
+              <button class="fix__b" type="button" disabled>Driver swapped</button>
+            </div>
+
+            <div class="decide">
+              <span class="decide__m">Assigned 09:14, load TR-4482. Any of the six records can be undone.</span>
+              <button class="decide__b decide__b--done" type="button" disabled>Assigned</button>
+            </div>
+          </div>
+
+          <div class="panel__side">
+            <div class="sidehead">What the confirmation writes</div>
+            <div class="recs">
+              <div class="rec"><div class="rec__l">Vehicle</div><div class="rec__t">Available becomes On trip</div></div>
+              <div class="rec"><div class="rec__l">Trip</div><div class="rec__t">Six link chain created</div></div>
+              <div class="rec"><div class="rec__l">U-ETDS</div><div class="rec__t">Filed before departure</div></div>
+              <div class="rec"><div class="rec__l">Finance</div><div class="rec__t">€4 956 estimated cost on the shipment</div></div>
+              <div class="rec"><div class="rec__l">Carbon</div><div class="rec__t">6 807 kg CO₂e recorded</div></div>
+              <div class="rec"><div class="rec__l">Customer</div><div class="rec__t">Timeline updated</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <!-- 3 · the morning list -------------------------------------------------- -->
+  <section>
+    <div class="inner">
+      <h2>Your morning, already sorted.</h2>
+      <p class="sub">Seven vehicles carry a blocking signal. The list opens on them, before the first call comes in.</p>
+
+      <div class="box">
+        <div class="box__head"><span>Needs attention</span><span class="box__meta">6 signals</span></div>
+
+        <div class="arow">
+          <span class="tag tag--bad">Expired</span>
+          <span class="arow__t">Documents expired</span>
+          <span class="arow__m">Vehicle cannot legally move</span>
+          <span class="arow__n">3</span>
+        </div>
+        <div class="arow">
+          <span class="tag tag--bad">Overdue</span>
+          <span class="arow__t">Maintenance overdue</span>
+          <span class="arow__m">Past the service window</span>
+          <span class="arow__n">3</span>
+        </div>
+        <div class="arow">
+          <span class="tag tag--warn">30 days</span>
+          <span class="arow__t">Documents expiring in 30 days</span>
+          <span class="arow__m">7 of them block a UK leg</span>
+          <span class="arow__n">12</span>
+        </div>
+        <div class="arow">
+          <span class="tag tag--info">48 hours</span>
+          <span class="arow__t">Trips unassigned</span>
+          <span class="arow__m">Pickup within 48 hours</span>
+          <span class="arow__n">5</span>
+        </div>
+        <div class="arow">
+          <span class="tag tag--warn">Late</span>
+          <span class="arow__t">Trips running late</span>
+          <span class="arow__m">Each one has a reason attached</span>
+          <span class="arow__n">3</span>
+        </div>
+        <div class="arow">
+          <span class="tag tag--info">AETR</span>
+          <span class="arow__t">Drivers near the AETR limit</span>
+          <span class="arow__m">Less than 1h of driving left</span>
+          <span class="arow__n">2</span>
+        </div>
+
+        <div class="box__foot">Counts are computed from the fleet, not typed into the page.
+          Seven vehicles carry at least one blocking signal, counted once each.</div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <!-- 4 · the six records ---------------------------------------------------- -->
+  <section>
+    <div class="inner">
+      <h2>One press, six updates.</h2>
+      <p class="sub">No spreadsheet, no second entry, no mail to write afterwards.</p>
+
+      <div class="box">
+        <div class="box__head"><span>Assignment 09:14 · TR-4482</span><span class="box__meta box__meta--ok">Undo available</span></div>
+
+        <div class="recrow">
+          <svg class="ico--ok" width="14" height="14" aria-hidden="true"><use href="#i-tick"></use></svg>
+          <span class="recrow__l">Vehicle</span><span class="recrow__t">Available becomes On trip</span>
+        </div>
+        <div class="recrow">
+          <svg class="ico--ok" width="14" height="14" aria-hidden="true"><use href="#i-tick"></use></svg>
+          <span class="recrow__l">Trip</span><span class="recrow__t">Six link chain created</span>
+        </div>
+        <div class="recrow">
+          <svg class="ico--ok" width="14" height="14" aria-hidden="true"><use href="#i-tick"></use></svg>
+          <span class="recrow__l">U-ETDS</span><span class="recrow__t">Filed before departure</span>
+        </div>
+        <div class="recrow">
+          <svg class="ico--ok" width="14" height="14" aria-hidden="true"><use href="#i-tick"></use></svg>
+          <span class="recrow__l">Finance</span><span class="recrow__t">€4 956 estimated cost pushed to the shipment</span>
+        </div>
+        <div class="recrow">
+          <svg class="ico--ok" width="14" height="14" aria-hidden="true"><use href="#i-tick"></use></svg>
+          <span class="recrow__l">Carbon</span><span class="recrow__t">6 807 kg CO₂e recorded against the shipment</span>
+        </div>
+        <div class="recrow">
+          <svg class="ico--ok" width="14" height="14" aria-hidden="true"><use href="#i-tick"></use></svg>
+          <span class="recrow__l">Customer</span><span class="recrow__t">Timeline updated</span>
+        </div>
+
+        <div class="box__foot">The cost is the vehicle's own rate against the distance of this leg,
+          so it changes when the truck changes.</div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <!-- 5 · the corridor is a chain -------------------------------------------- -->
+  <section>
+    <div class="inner">
+      <h2>Catch the missing GVMS at Calais, not at Dover.</h2>
+      <p class="sub">A trip is six links, each with its own state. TR-4471 is boarding with one link unresolved.</p>
+
+      <div class="dark">
+        <div class="chain">
+          <div class="node node--done">
+            <div class="node__line" aria-hidden="true"></div>
+            <span class="node__dot">1</span>
+            <div class="node__txt"><div class="node__n">Loading</div><div class="node__m">28.08 · 09:40</div></div>
+          </div>
+          <div class="node node--done">
+            <div class="node__line" aria-hidden="true"></div>
+            <span class="node__dot">2</span>
+            <div class="node__txt"><div class="node__n">TR Customs</div><div class="node__m">28.08 · 16:05</div></div>
+          </div>
+          <div class="node node--current">
+            <div class="node__line" aria-hidden="true"></div>
+            <span class="node__dot">3</span>
+            <div class="node__txt"><div class="node__n">Ro-Ro</div><div class="node__m">Boarding</div></div>
+          </div>
+          <div class="node">
+            <div class="node__line" aria-hidden="true"></div>
+            <span class="node__dot">4</span>
+            <div class="node__txt"><div class="node__n">NCTS</div><div class="node__m">Accepted</div></div>
+          </div>
+          <div class="node node--blocked">
+            <div class="node__line" aria-hidden="true"></div>
+            <span class="node__dot">5</span>
+            <div class="node__txt"><div class="node__n">GVMS</div><div class="node__m">No reference yet</div></div>
+          </div>
+          <div class="node">
+            <div class="node__line" aria-hidden="true"></div>
+            <span class="node__dot">6</span>
+            <div class="node__txt"><div class="node__n">Delivery</div><div class="node__m">ETA 13.09</div></div>
+          </div>
+        </div>
+
+        <div class="decls">
+          <span class="decl">U-ETDS<span class="decl__s">Filed</span></span>
+          <span class="decl">NCTS<span class="decl__s">Accepted</span></span>
+          <span class="decl decl--off">ENS<span class="decl__s">Not required</span></span>
+          <span class="decl decl--bad">GVMS<span class="decl__s">Missing</span></span>
+          <span class="decls__note">Without a GVMS reference the truck cannot board at Calais.
+            The delay shows on the customer timeline instead of a departure.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <!-- 6 · subcontracted trucks go through the same gate ----------------------- -->
+  <section>
+    <div class="inner">
+      <h2>Subcontractors are not a blind spot.</h2>
+      <p class="sub">18 own, 24 subcontracted, ranked by the same checks. Every row says why it sits where it sits.</p>
+
+      <div class="box">
+        <div class="thead">
+          <span>Plate</span><span>Ownership</span><span>Hours left</span><span>Readiness</span>
+        </div>
+        <div class="trow">
+          <span class="trow__p">16 TR 5539</span><span class="own">Own</span>
+          <span class="trow__h">8h 08m</span><span class="trow__s s--ok">100</span>
+        </div>
+        <div class="trow">
+          <span class="trow__p">35 TR 4828</span><span class="own">Own</span>
+          <span class="trow__h">8h 23m</span><span class="trow__s s--ok">100</span>
+        </div>
+        <div class="trow">
+          <span class="trow__p">34 TR 5510</span><span class="own">Own</span>
+          <span class="trow__h">0h 45m</span><span class="trow__s s--warn">84</span>
+        </div>
+        <div class="trow">
+          <span class="trow__p">16 TR 2927</span><span class="own own--sub">Subcontracted</span>
+          <span class="trow__h">8h 18m</span><span class="trow__s s--warn">64</span>
+        </div>
+        <div class="trow">
+          <span class="trow__p">34 TR 1150</span><span class="own">Own</span>
+          <span class="trow__h">No driver</span><span class="trow__s s--bad">53</span>
+        </div>
+        <div class="box__foot">Own trucks win a tie because they carry no subcontractor margin,
+          and an own truck with no driver still ranks below a subcontracted one that is ready.
+          Telemetry sources are named per vehicle: Arvento, Mobiliz, Motive.</div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <!-- 7 · where the module sits ---------------------------------------------- -->
+  <section>
+    <div class="inner">
+      <h2>It sits inside the Modaltrans you already run.</h2>
+      <p class="sub">The load you assign here is the load your customs file and your invoice already know about.</p>
+
+      <div class="mods">
+        <span class="mod"><span class="dot" aria-hidden="true"></span>Freight Management</span>
+        <span class="mod"><span class="dot" aria-hidden="true"></span>Customs Management</span>
+        <span class="mod"><span class="dot" aria-hidden="true"></span>Finance Management</span>
+        <span class="mod mod--this"><span class="dot" aria-hidden="true"></span>Fleet Management</span>
+      </div>
+
+      <p class="note">Modaltrans already runs the job file from quote to customs entry to invoice.
+        Fleet Management is the missing answer to one question inside it: can this truck take this load today.</p>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <!-- 8 · what the desk gets --------------------------------------------------- -->
+  <section>
+    <div class="inner">
+      <h2>What the desk gets.</h2>
+
+      <div class="vals">
+        <div class="val"><span class="val__n">7</span><span class="val__t">vehicles flagged before the first call, not found out at noon</span></div>
+        <div class="val"><span class="val__n">12</span><span class="val__t">expiring papers named, seven of them blocking a UK leg</span></div>
+        <div class="val"><span class="val__n">€1.41</span><span class="val__t">average cost per km, read from the fleet's own records</span></div>
+        <div class="val"><span class="val__n">6 807</span><span class="val__t">kg CO₂e on this shipment, with no separate exercise</span></div>
+        <div class="val"><span class="val__n">78%</span><span class="val__t">utilisation, computed from vehicle status rather than typed in</span></div>
+        <div class="val"><span class="val__n">0</span><span class="val__t">loads sent out on an expired paper or a driver who is short of hours</span></div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <!-- 9 · the way out ------------------------------------------------------- -->
+  <section>
+    <div class="inner">
+      <div class="end">
+        <div class="end__c">
+          <div class="end__t">Open it on the 42 vehicle demo fleet.</div>
+          <div class="end__s">Everything is generated in the page. Nothing is saved and nothing is sent.</div>
+        </div>
+        <a class="btn btn--primary" data-demo-link
+           href="https://claude.ai/code/artifact/6d55e897-55a3-4d7d-9580-1f4c3730d7c2">Open the demo</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<hr class="rule">
+<footer class="foot">
+  <span>Fleet Management is a concept for a Modaltrans module</span>
+  <span class="spacer"></span>
+  <span>Concept build · figures from a 42 vehicle demo fleet</span>
+</footer>
