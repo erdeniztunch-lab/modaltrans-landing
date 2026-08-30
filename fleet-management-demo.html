@@ -1,4 +1,7 @@
 <title>Modaltrans Fleet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
 /* ============================================================================
    Modaltrans Fleet — implementation of "Modaltrans DS.dc.html"
@@ -563,7 +566,12 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
 .nav__item:hover { background: var(--surface-2); color: var(--text); text-decoration: none; }
 .nav__item[aria-current="page"] { background: var(--accent-soft); color: var(--accent); }
 .nav__count { margin-left: auto; font-size: var(--fs-xs); color: var(--text-muted); font-variant-numeric: tabular-nums; }
-.rail__foot { margin-top: auto; padding: var(--sp-3); }
+.rail__foot {
+  margin-top: auto; padding: var(--sp-3);
+  display: flex; align-items: center; gap: var(--sp-4);
+}
+.railinfo { flex: none; text-decoration: none; }
+.railinfo:hover { text-decoration: none; color: var(--text); }
 
 .concept {
   display: inline-flex; align-items: center; gap: var(--sp-3);
@@ -615,7 +623,10 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
     border-right: 0; border-bottom: 1px solid var(--border); overflow-x: auto;
   }
   .rail .nav { flex-direction: row; }
-  .rail__foot, .brand__sub { display: none; }
+  .brand__sub { display: none; }
+  /* the rail turns into a horizontal bar; keep the brief reachable, drop the badge */
+  .rail__foot { margin-top: 0; margin-left: auto; padding: 0; }
+  .rail__foot .concept { display: none; }
   .view, .topbar { padding-left: var(--sp-5); padding-right: var(--sp-5); }
 }
 
@@ -975,6 +986,144 @@ table.data tbody tr.is-idle:hover { background: transparent; }
 }
 @media (max-width: 720px) { .map { height: 220px; } .mapsvg text { display: none; } }
 
+
+/* ============================================================================
+   PRODUCT BRIEF — a reading surface inside an operations app.
+   Its colours come from the app's own roles, so it themes for free; its
+   typography deliberately differs, so it reads as a document rather than
+   another screen.
+   ========================================================================= */
+.brief {
+  --b-ground: var(--bg);
+  --b-surface: var(--surface);
+  --b-surface-2: var(--surface-2);
+  --b-line: var(--border);
+  --b-line-strong: var(--border-strong);
+  --b-ink: var(--text);
+  --b-ink-2: var(--text-2);
+  --b-muted: var(--text-muted);
+  --b-accent: var(--accent);
+  --b-wash: var(--accent-soft);
+
+  max-width: 61rem;
+  margin: 0 auto;
+  font-family: "IBM Plex Sans", -apple-system, "Segoe UI", system-ui, sans-serif;
+  font-size: 16.5px;
+  line-height: 1.62;
+  color: var(--b-ink);
+}
+
+.brief h1, .brief h2, .brief h3 {
+  font-family: Archivo, "IBM Plex Sans", sans-serif;
+  margin: 0; text-wrap: balance; letter-spacing: -0.02em;
+}
+.brief h1 { font-size: clamp(2.1rem, 5.4vw, 3.4rem); font-weight: 700; line-height: 1.04; }
+.brief h2 { font-size: clamp(1.35rem, 2.6vw, 1.75rem); font-weight: 600; line-height: 1.18; }
+.brief h3 { font-size: 1.02rem; font-weight: 600; letter-spacing: -0.01em; }
+.brief p { margin: 0; max-width: 63ch; }
+.brief strong { font-weight: 600; color: var(--b-ink); }
+.brief em { font-style: italic; }
+
+.brief .eyebrow {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.72rem; font-weight: 500;
+  letter-spacing: 0.13em; text-transform: uppercase; color: var(--b-accent);
+}
+.brief .lede { font-size: clamp(1.05rem, 2vw, 1.22rem); line-height: 1.55; color: var(--b-ink-2); max-width: 54ch; }
+.brief .b-muted { color: var(--b-muted); }
+.brief .b-mono { font-family: "IBM Plex Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+
+.brief .masthead { display: flex; flex-direction: column; gap: 1.15rem; padding-bottom: 2rem; }
+.brief .masthead .rule { height: 3px; width: 3.5rem; background: var(--b-accent); border-radius: 2px; }
+.brief .meta {
+  display: flex; flex-wrap: wrap; gap: 0.5rem 1.4rem;
+  padding-top: 1.4rem; margin-top: 0.4rem; border-top: 1px solid var(--b-line);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.76rem; color: var(--b-muted);
+}
+.brief .meta b { color: var(--b-ink-2); font-weight: 500; }
+
+.brief section { padding-top: 3.4rem; }
+.brief .sechead { display: flex; flex-direction: column; gap: 0.55rem; margin-bottom: 1.5rem; }
+.brief .b-stack { display: flex; flex-direction: column; gap: 1.15rem; }
+
+.brief .quads {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 1px; background: var(--b-line); border: 1px solid var(--b-line);
+  border-radius: 3px; overflow: hidden;
+}
+.brief .quad { background: var(--b-surface); padding: 1.15rem 1.25rem; display: flex; flex-direction: column; gap: 0.35rem; }
+.brief .quad h3 { color: var(--b-accent); }
+.brief .quad p { font-size: 0.93rem; color: var(--b-ink-2); }
+
+.brief .thesis {
+  margin-top: 1rem; padding: 1.6rem 1.75rem;
+  background: var(--b-wash); border-left: 3px solid var(--b-accent); border-radius: 0 4px 4px 0;
+}
+.brief .thesis p {
+  font-family: Archivo, sans-serif; font-size: clamp(1.1rem, 2.3vw, 1.4rem);
+  font-weight: 500; line-height: 1.35; letter-spacing: -0.015em; max-width: 40ch;
+}
+
+.brief .facts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.9rem; }
+.brief .facts li {
+  display: grid; grid-template-columns: 8.5rem 1fr; gap: 1.1rem; align-items: baseline;
+  padding-bottom: 0.9rem; border-bottom: 1px solid var(--b-line);
+}
+.brief .facts li:last-child { border-bottom: 0; padding-bottom: 0; }
+.brief .facts .k {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.76rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--b-muted);
+}
+.brief .facts .v { font-size: 0.97rem; color: var(--b-ink-2); }
+@media (max-width: 34rem) { .brief .facts li { grid-template-columns: 1fr; gap: 0.2rem; } }
+
+.brief .figures { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: 1rem; }
+.brief .figure { background: var(--b-surface); border: 1px solid var(--b-line); border-radius: 4px; padding: 1.15rem 1.25rem; }
+.brief .figure .n {
+  font-family: Archivo, sans-serif; font-size: 1.85rem; font-weight: 700;
+  letter-spacing: -0.03em; font-variant-numeric: tabular-nums; display: block; line-height: 1.1;
+}
+.brief .figure .l { font-size: 0.86rem; color: var(--b-muted); display: block; margin-top: 0.3rem; }
+
+.brief .btable { overflow-x: auto; border: 1px solid var(--b-line); border-radius: 4px; background: var(--b-surface); }
+.brief .btable table { width: 100%; border-collapse: collapse; font-size: 0.93rem; }
+.brief .btable th {
+  position: static; text-align: left; padding: 0.7rem 1rem;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.7rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--b-muted); background: var(--b-surface-2); border-bottom: 1px solid var(--b-line);
+  white-space: nowrap; cursor: default;
+}
+.brief .btable td { height: auto; padding: 0.8rem 1rem; border-bottom: 1px solid var(--b-line); vertical-align: top; color: var(--b-ink-2); font-size: 0.93rem; white-space: normal; }
+.brief .btable tbody tr { cursor: default; }
+.brief .btable tbody tr:hover { background: transparent; }
+.brief .btable tbody tr:last-child td { border-bottom: 0; }
+.brief .btable td:first-child { color: var(--b-ink); font-weight: 500; }
+.brief .btable td.num { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.brief .btag {
+  display: inline-flex; align-items: center; padding: 0.12rem 0.5rem; border-radius: 3px;
+  white-space: nowrap; font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.7rem; font-weight: 500; border: 1px solid transparent;
+}
+.brief .btag--yes  { background: var(--ok-bg);   color: var(--ok-fg);   border-color: var(--ok-br); }
+.brief .btag--part { background: var(--warn-bg); color: var(--warn-fg); border-color: var(--warn-br); }
+.brief .btag--no   { background: var(--b-surface-2); color: var(--b-muted); border-color: var(--b-line-strong); border-style: dashed; }
+
+.brief .panel-b {
+  background: var(--b-surface); border: 1px solid var(--b-line-strong);
+  border-radius: 4px; padding: 1.4rem 1.5rem; display: flex; flex-direction: column; gap: 0.85rem;
+}
+.brief .panel-b h3 { font-family: "IBM Plex Sans", sans-serif; }
+.brief .b-split { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+@media (max-width: 46rem) { .brief .b-split { grid-template-columns: 1fr; } }
+.brief .b-split ul { margin: 0.5rem 0 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 0.4rem; }
+.brief .b-split li { font-size: 0.93rem; color: var(--b-ink-2); }
+.brief .b-split li::marker { color: var(--b-accent); }
+
+.brief footer { margin-top: 4rem; padding-top: 1.5rem; border-top: 1px solid var(--b-line); font-size: 0.83rem; color: var(--b-muted); }
+
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
@@ -1020,6 +1169,11 @@ table.data tbody tr.is-idle:hover { background: transparent; }
     <nav class="nav" id="nav" aria-label="Fleet sections"></nav>
     <div class="rail__foot">
       <span class="concept" title="Unofficial concept. Every record below is fictional.">Concept · Demo data</span>
+      <a class="btn btn--secondary btn--sm btn--icon railinfo has-tip" href="#/about"
+         data-tip="Product brief — what this module is, why Modaltrans needs it, and the smallest scope that could ship."
+         aria-label="Product brief: why this module exists">
+        <svg class="ico ico--sm" aria-hidden="true"><use href="#i-info"/></svg>
+      </a>
     </div>
   </aside>
 
@@ -1822,6 +1976,7 @@ const ROUTES = [
   { id: "maintenance", title: "Maintenance", icon: "tools",    badge: () => S.maintNeedingWork(), bad: true },
   /* A flow, not a section — reachable from Overview and Vehicles, not the rail. */
   { id: "assign", title: "Assign a leg", icon: "route", hidden: true },
+  { id: "about", title: "Product brief", icon: "info", hidden: true },
 ];
 const views = {};
 const scrollMemory = new Map();
@@ -2867,6 +3022,169 @@ function closeDrawer() {
   Store.emit();
   if (back) { const el = document.querySelector(back); el?.focus(); }
 }
+
+/* ============================================================================
+   VIEW · PRODUCT BRIEF
+   The same document that ships as a standalone artifact, rendered inside the
+   app. The fleet figures come from the live dataset, so the brief can never
+   quote a number the demo has stopped showing.
+   ========================================================================= */
+views.about = () => `
+<article class="brief">
+
+  <header class="masthead">
+    <span class="eyebrow">Ürün notu · Yeni modül</span>
+    <div class="rule"></div>
+    <h1>Filo Yönetimi</h1>
+    <p class="lede">Modaltrans'ın kendi sitesinde <em>“Yakında”</em> yazan modül. Bu not üç şeyi anlatıyor: bu ürün ne, neden Modaltrans'ın yapması gerekiyor, ve piyasaya çıkmak için en az neyin bitmiş olması gerekiyor.</p>
+    <div class="meta">
+      <span><b>Durum</b> Konsept · çalışan demo</span>
+      <span><b>Kapsam</b> Karayolu, TR–AB–UK koridoru</span>
+      <span><b>Tarih</b> Ağustos 2026</span>
+    </div>
+  </header>
+
+  <section>
+    <div class="sechead"><span class="eyebrow">Bir</span><h2>Bu ürün ne?</h2></div>
+    <div class="b-stack">
+      <p>Modaltrans bugün müşterilerinin <strong>yüklerini</strong> yönetiyor: teklif, rezervasyon, gümrük, fatura. Ama o yükleri taşıyan <strong>kamyonları</strong> yönetmiyor.</p>
+      <p>Filo Yönetimi tam olarak bunu yapar. Bir nakliye firmasının kendi araçları ve sürücüleri hakkında sorduğu dört soruyu cevaplar:</p>
+      <div class="quads">
+        <div class="quad"><h3>Nerede?</h3><p>Araç şu an hangi noktada, ne zaman varır, gecikti mi.</p></div>
+        <div class="quad"><h3>Kimde?</h3><p>Hangi sürücü kullanıyor, kaç saattir direksiyonda, daha ne kadar sürebilir.</p></div>
+        <div class="quad"><h3>Sağlam mı?</h3><p>Bakımı gelmiş mi, belgeleri geçerli mi, yola çıkabilir mi.</p></div>
+        <div class="quad"><h3>Kazandırıyor mu?</h3><p>Bu sefer kaç para tuttu, boş mu döndü, hangi hat kârlı.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sechead"><span class="eyebrow">İki</span><h2>Neden bunu Modaltrans yapmalı</h2></div>
+    <div class="b-stack">
+      <p>Bu bir “şunu da ekleyelim” fikri değil. Şirketin elinde bu modülün üç parçası zaten var; eksik olan onları birbirine bağlayan katman.</p>
+      <ul class="facts">
+        <li><span class="k">Veri zaten akıyor</span><span class="v">Modaltrans <strong>Arvento, Mobiliz ve Motive</strong> ile entegre — bunlar araç takip sistemleri. Yani kamyonların nerede olduğu bilgisi sisteme zaten geliyor. Kimse onu işe çevirmiyor.</span></li>
+        <li><span class="k">Yükümlülük zaten var</span><span class="v">Türkiye'de her sefer, kamyon yola çıkmadan önce devlete elektronik olarak bildirilmek zorunda (<span class="b-mono">U-ETDS</span>). Modaltrans bu entegrasyona sahip — ama bildirimi besleyecek bir “sefer” kaydı yok.</span></li>
+        <li><span class="k">Koridor zaten kurulu</span><span class="v">Feribot, transit beyanı, İngiltere sınır kapısı — hepsinin entegrasyonu mevcut. Türkiye'den Avrupa'ya giden bir TIR'ın geçtiği her kapı sistemde var. Sadece TIR'ın kendisi yok.</span></li>
+        <li><span class="k">Müşteri zaten bu tipte</span><span class="v">Nakliye firmalarının çoğu hem kendi kamyonunu kullanır hem taşeron çeker. Modaltrans taşeron tarafını yönetiyor, öz mal tarafını yönetmiyor. Müşteri farkı Excel'le kapatıyor.</span></li>
+      </ul>
+      <div class="thesis"><p>Filo modülü bir araç takip ürünü değil. Zaten gelen takip verisinin üstünde duran karar katmanı.</p></div>
+      <p class="b-muted" style="font-size:0.93rem">Bu ayrım fiyatı da belirliyor: takip ürünü satmaya kalkarsanız Arvento'yla rekabet edersiniz ve kaybedersiniz. Karar katmanı satarsanız onların müşterisine ek değer satarsınız.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sechead"><span class="eyebrow">Üç</span><h2>Kimin sorunu, ne kadar acıtıyor</h2></div>
+    <div class="b-stack">
+      <p><strong>Pazartesi sabahı, bir sevkiyat şefi.</strong> Önünde beş yük var, hepsinin çıkması gerekiyor. Hangi kamyonun boşta olduğunu WhatsApp'tan soruyor. Şoförün kaç saat sürebileceğini kafadan hesaplıyor. Muayenesi dolmak üzere olan aracı hatırlamaya çalışıyor. Yükü verdikten sonra devlete bildirimi elle giriyor. Akşam müşteri arıyor: “yük nerede?”</p>
+      <p>Her adım tek başına küçük. Toplamı şu:</p>
+      <div class="figures">
+        <div class="figure"><span class="n">%3–8</span><span class="l">Nakliyecinin brüt marjı. Hata payı yok.</span></div>
+        <div class="figure"><span class="n">€1,42</span><span class="l">Bir kamyonun kilometre maliyeti (AB ort.)</span></div>
+        <div class="figure"><span class="n">%78</span><span class="l">İyi sayılan araç kullanım oranı. Gerisi boşta.</span></div>
+      </div>
+      <p>Marj bu kadar inceyken <strong>boş dönen her kilometre doğrudan kârdan yeniyor.</strong> Belgesi dolmuş bir araç sınırda durdurulursa bir seferin kârı gider. Devlete bildirim geç yapılırsa ceza yazılır.</p>
+      <p>Bunların hiçbiri yeni bir problem değil — herkes biliyor. Yeni olan şey, çözmek için gereken verinin <strong>zaten Modaltrans'ın içinde olması.</strong></p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sechead"><span class="eyebrow">Dört</span><h2>Çıkmak için en az ne gerekli</h2></div>
+    <div class="b-stack">
+      <p>Bir filo yazılımı sonsuza kadar büyütülebilir. Soru şu: <strong>hangisi olmadan bu modül satılamaz?</strong> Beş madde. Biri eksikse ürün yarım kalır.</p>
+      <div class="btable">
+        <table>
+          <thead><tr><th>Yetenek</th><th>Neden bunsuz olmaz</th></tr></thead>
+          <tbody>
+            <tr><td>Araç ve sürücü envanteri</td><td>Her şeyin dayandığı liste. Kimin neyi olduğu bilinmeden hiçbir karar verilemez.</td></tr>
+            <tr><td>Sefer atama</td><td>Modülün asıl işi. Yükü kamyona bağlamayan bir filo ekranı sadece bir tablodur.</td></tr>
+            <tr><td>Uyum kontrolü</td><td>Belgesi dolmuş aracı yola çıkarmayı <em>engellemek</em>. Uyarı vermek yetmez — engellemeli.</td></tr>
+            <tr><td>Bildirim bağlantısı</td><td>Sefer oluşunca devlete bildirim gitmeli. Yasal zorunluluk, isteğe bağlı değil.</td></tr>
+            <tr><td>Sefer maliyeti</td><td>Maliyet sevkiyatın kârlılığına düşmeli. Yoksa firma yine ay sonunu bekler.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>İlk sürümde olmayabilir:</strong> karbon raporu, taşeron self-servis portalı, rota optimizasyonu, sürücü mobil uygulaması, canlı navlun tarifesi karşılaştırma. Hepsi değerli — ama hiçbiri “bunsuz satamayız” değil.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sechead"><span class="eyebrow">Beş</span><h2>Bu demoda ne var, ne yok</h2></div>
+    <div class="b-stack">
+      <div class="panel-b">
+        <h3>Önce dürüst olalım</h3>
+        <p style="font-size:0.95rem">Bu <strong>çalışan bir konsept</strong>, ürün değil. Arkasında sunucu yok, veritabanı yok. Ekrandaki ${S.all().length} araç, ${S.drivers().length} sürücü ve ${S.trips().length} sefer kurgu — ama tutarlı: bütün sayılar aynı veriden hesaplanıyor, hiçbiri ekrana elle yazılmadı. Bir şeyi değiştirdiğinizde etkisi her yere yayılıyor.</p>
+      </div>
+      <div class="btable">
+        <table>
+          <thead><tr><th>Minimum kapsam</th><th>Demoda</th><th>Not</th></tr></thead>
+          <tbody>
+            <tr><td>Araç ve sürücü envanteri</td><td><span class="btag btag--yes">Var</span></td><td>Öz mal ve taşeron ayrı; belge, bakım, telemetri, maliyet dahil.</td></tr>
+            <tr><td>Sefer atama</td><td><span class="btag btag--yes">Var</span></td><td>Araçlar uygunluğa göre sıralanıyor, her birinde “neden bu sırada” gerekçesi var.</td></tr>
+            <tr><td>Uyum kontrolü</td><td><span class="btag btag--yes">Var</span></td><td>Engel varken atama butonu kilitli. Düzeltme önerisi tıklanabilir ve gerçekten çalışıyor.</td></tr>
+            <tr><td>Bildirim bağlantısı</td><td><span class="btag btag--part">Simüle</span></td><td>Sefer oluşunca bildirim “gönderildi” işaretleniyor. Gerçek API bağlı değil.</td></tr>
+            <tr><td>Sefer maliyeti</td><td><span class="btag btag--part">Simüle</span></td><td>Maliyet ve karbon hesaplanıp sevkiyata yazılıyor; muhasebeye gitmiyor.</td></tr>
+            <tr><td>Canlı konum</td><td><span class="btag btag--part">Simüle</span></td><td>Koridor haritasında araçlar ilerliyor, gecikme olayı düşüyor. Veri gerçek değil.</td></tr>
+            <tr><td>Taşeron portalı</td><td><span class="btag btag--no">Yok</span></td><td>İlk sürüm kapsamı dışında.</td></tr>
+            <tr><td>Rota optimizasyonu</td><td><span class="btag btag--no">Yok</span></td><td>Ayrı bir uzmanlık; bilinçli olarak kapsam dışı.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="b-split">
+        <div>
+          <h3>Demo neyi kanıtlıyor</h3>
+          <ul>
+            <li>Akışın kendisi çalışıyor: yükü seç, aracı seç, engeli gör, çöz, ata.</li>
+            <li>Uyum mantığı gerçek kurallara oturuyor — sürüş saati, belge süresi, tehlikeli madde yetkisi.</li>
+            <li>Tek bir tıkın altı ayrı yeri güncellemesi mümkün ve anlaşılır.</li>
+            <li>Modaltrans'ın kendi tasarım dili bir operasyon ekranında işliyor.</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Neyi kanıtlamıyor</h3>
+          <ul>
+            <li>Entegrasyonların gerçekte ne kadar zor olduğunu.</li>
+            <li>500 araçta performansın ne olacağını.</li>
+            <li>Gerçek kullanıcıların bu akışı sevip sevmeyeceğini.</li>
+            <li>Fiyatlandırmanın tutup tutmayacağını.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sechead"><span class="eyebrow">Altı</span><h2>Gerçek olsaydı sırada ne olurdu</h2></div>
+    <div class="b-stack">
+      <p>Konseptten ürüne giden yol uzun değil, çünkü zor parçalar zaten şirketin elinde.</p>
+      <ul class="facts">
+        <li><span class="k">Adım 1</span><span class="v">Takip akışını bağla. Arvento ve Motive entegrasyonları var; konum verisini sefer kaydına yaz.</span></li>
+        <li><span class="k">Adım 2</span><span class="v">Bildirimi gerçek yap. <span class="b-mono">U-ETDS</span> bağlantısı mevcut; sefer oluşunca tetikle.</span></li>
+        <li><span class="k">Adım 3</span><span class="v">Maliyeti muhasebeye akıt. Xero, Sage, Logo entegrasyonları hazır.</span></li>
+        <li><span class="k">Pilot</span><span class="v">Tek bir nakliye firması, ~15 araç, 4 hafta. Hedef müşteriyi seçerken TR–UK hattında çalışan biri olsun; en çok acıyı orada çekiyorlar.</span></li>
+      </ul>
+      <h3 style="margin-top:1.4rem">Pilotu neye göre başarılı sayarız</h3>
+      <div class="btable">
+        <table>
+          <thead><tr><th>Ölçüt</th><th class="num">Bugün</th><th class="num">Hedef</th></tr></thead>
+          <tbody>
+            <tr><td>Bir yüke araç atama süresi</td><td class="num">10–20 dk</td><td class="num">&lt; 1 dk</td></tr>
+            <tr><td>Boş dönen kilometre</td><td class="num">%14</td><td class="num">%11</td></tr>
+            <tr><td>Belge yüzünden sınırda bekleme</td><td class="num">ayda 2–3</td><td class="num">0</td></tr>
+            <tr><td>Geç yapılan resmî bildirim</td><td class="num">bilinmiyor</td><td class="num">0</td></tr>
+            <tr><td>“Yük nerede?” e-postası</td><td class="num">günde 20+</td><td class="num">yarısı</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="b-muted" style="font-size:0.93rem">Bu sayıların hepsi ölçülebilir ve dördü doğrudan paraya çevrilebilir. Pilot bunları taşımazsa modül yanlış kurgulanmış demektir.</p>
+    </div>
+  </section>
+
+  <footer>
+    Bağımsız konsept çalışması. Modaltrans'ın resmî ürünü ya da yol haritası değildir; şirketin kamuya açık web sitesi, entegrasyon listesi ve sektör kaynakları üzerinden hazırlanmıştır. Demodaki tüm kayıtlar kurgudur.
+  </footer>
+
+</article>`;
 
 /* ============================================================================
    EVENTS — one delegated listener for the whole app

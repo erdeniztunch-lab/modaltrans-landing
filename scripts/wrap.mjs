@@ -36,10 +36,12 @@ const LIVE_RELOAD = `
 export function wrap(fragment, { dev = false } = {}) {
   const title = (fragment.match(/<title>([\s\S]*?)<\/title>/) || [, "Modaltrans Fleet"])[1].trim();
 
-  const styles = [];
+  /* <link> and <style> belong in the head; everything else is the body. */
+  const head = [];
   let body = fragment
     .replace(/<title>[\s\S]*?<\/title>\s*/i, "")
-    .replace(/<style>[\s\S]*?<\/style>\s*/gi, m => { styles.push(m); return ""; });
+    .replace(/<link\b[^>]*>\s*/gi, m => { head.push(m); return ""; })
+    .replace(/<style>[\s\S]*?<\/style>\s*/gi, m => { head.push(m); return ""; });
 
   return `<!doctype html>
 <html lang="en">
@@ -54,7 +56,7 @@ export function wrap(fragment, { dev = false } = {}) {
 <meta property="og:type" content="website">
 <meta property="og:title" content="${title}">
 <meta property="og:description" content="${DESCRIPTION}">
-${styles.join("\n")}
+${head.join("\n")}
 </head>
 <body>
 ${body.trim()}
