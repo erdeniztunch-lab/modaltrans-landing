@@ -139,7 +139,7 @@
   --dur-micro: 120ms; --dur-move: 200ms;
   --ease: cubic-bezier(0.32, 0.72, 0, 1);
 
-  --rail-w: 216px;
+  --rail-w: 232px;
 }
 
 /* Density: compact changes padding + heights only, never typography */
@@ -369,6 +369,20 @@ a:hover { color: var(--accent-hover); text-decoration: underline; }
 }
 .field__help { display: block; margin-top: var(--sp-2); font-size: var(--fs-xs); color: var(--text-muted); }
 
+/* A real select, so the control says "choose one" rather than showing today's value */
+.pick {
+  display: inline-flex; align-items: center; gap: var(--sp-3);
+  height: var(--control-h); padding: 0 8px 0 10px;
+  border: 1px solid var(--control-border); border-radius: var(--r-control);
+  background: var(--surface); color: var(--text-2);
+}
+.pick:focus-within { box-shadow: var(--focus-ring); }
+.pick select {
+  border: 0; background: none; color: var(--text);
+  font-size: var(--fs-sm); font-weight: var(--w-label); cursor: pointer; padding-right: 2px;
+}
+.pick select:focus { outline: none; }
+
 /* ============================================================================
    CHIP — 22px, radius 4. Status is never a filled surface.
    ========================================================================= */
@@ -386,7 +400,6 @@ a:hover { color: var(--accent-hover); text-decoration: underline; }
 /* "not required" — quiet, not an error: no fill, dashed edge */
 .chip--quiet { background: transparent; border-style: dashed; color: var(--text-muted); }
 .chip--outline { background: transparent; border-color: var(--border-strong); color: var(--text-2); }
-.chip__count { min-width: 20px; justify-content: center; font-variant-numeric: tabular-nums; }
 .chip__x { display: inline-flex; margin-right: -2px; cursor: pointer; opacity: .7; }
 .chip__x:hover { opacity: 1; }
 
@@ -588,8 +601,14 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
 .nav__count { margin-left: auto; font-size: var(--fs-xs); color: var(--text-muted); font-variant-numeric: tabular-nums; }
 .rail__foot {
   margin-top: auto; padding: var(--sp-3);
-  display: flex; align-items: center; gap: var(--sp-4);
+  display: flex; flex-direction: column; align-items: stretch; gap: var(--sp-4);
 }
+.who {
+  display: flex; align-items: center; gap: var(--sp-4);
+  padding-top: var(--sp-4); border-top: 1px solid var(--border);
+}
+.who__text { display: flex; flex-direction: column; min-width: 0; }
+.who .railinfo { margin-left: auto; }
 .railinfo { flex: none; text-decoration: none; }
 .railinfo:hover { text-decoration: none; color: var(--text); }
 
@@ -645,8 +664,10 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
   .rail .nav { flex-direction: row; }
   .brand__sub { display: none; }
   /* the rail turns into a horizontal bar; keep the brief reachable, drop the badge */
-  .rail__foot { margin-top: 0; margin-left: auto; padding: 0; }
+  .rail__foot { margin-top: 0; margin-left: auto; padding: 0; flex-direction: row; align-items: center; }
   .rail__foot .concept { display: none; }
+  .who { padding-top: 0; border-top: 0; }
+  .who__text { display: none; }
   .view, .topbar { padding-left: var(--sp-5); padding-right: var(--sp-5); }
 }
 
@@ -686,8 +707,9 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
   border-radius: 50%; background: var(--surface-3); color: var(--text-2);
   font-size: var(--fs-xs); font-weight: var(--w-strong);
 }
-.who__name { font-size: var(--fs-sm); font-weight: var(--w-label); line-height: 1.2; }
-.who__role { font-size: var(--fs-micro); color: var(--text-muted); line-height: 1.2; }
+.who__name { font-size: var(--fs-sm); font-weight: var(--w-label); line-height: 1.25;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.who__role { font-size: var(--fs-micro); color: var(--text-muted); line-height: 1.25; }
 
 /* --- Nav badges ---------------------------------------------------------- */
 .nav__item[aria-current="page"] { font-weight: var(--w-strong); box-shadow: inset 2px 0 0 var(--accent); }
@@ -1164,6 +1186,43 @@ table.data tbody tr.is-idle:hover { background: transparent; }
 .brief .b-split li { font-size: 0.93rem; color: var(--b-ink-2); }
 .brief .b-split li::marker { color: var(--b-accent); }
 
+
+/* --- Craft notes: open only if you want them -------------------------- */
+.brief .rationale { margin-top: 3.4rem; border-top: 1px solid var(--b-line); }
+.brief .rationale > summary {
+  padding: 1.2rem 0 1rem; cursor: pointer; list-style: none;
+  display: flex; align-items: center; gap: 0.6rem;
+  font-family: Archivo, sans-serif; font-size: 1.05rem; font-weight: 600;
+  letter-spacing: -0.01em; color: var(--b-ink);
+}
+.brief .rationale > summary::-webkit-details-marker { display: none; }
+.brief .rationale > summary::before {
+  content: "+"; display: inline-grid; place-items: center;
+  width: 1.35rem; height: 1.35rem; flex: none;
+  border: 1px solid var(--b-line-strong); border-radius: 3px;
+  font-family: "IBM Plex Mono", monospace; font-size: 0.9rem; color: var(--b-accent);
+}
+.brief .rationale[open] > summary::before { content: "\2212"; }
+.brief .rationale > summary span { color: var(--b-muted); font-weight: 400; font-size: 0.9rem; }
+.brief .rationale__body { display: flex; flex-direction: column; gap: 1.6rem; padding-bottom: 1rem; }
+.brief .why { display: grid; grid-template-columns: 13rem 1fr; gap: 1.4rem; align-items: baseline; }
+.brief .why h4 {
+  margin: 0; font-family: "IBM Plex Sans", sans-serif;
+  font-size: 0.9rem; font-weight: 600; color: var(--b-ink); line-height: 1.4;
+}
+.brief .why p { font-size: 0.93rem; color: var(--b-ink-2); }
+@media (max-width: 44rem) { .brief .why { grid-template-columns: 1fr; gap: 0.3rem; } }
+.brief .colophon {
+  margin-top: 0.6rem; padding-top: 1.2rem; border-top: 1px solid var(--b-line);
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1.2rem;
+}
+.brief .colophon div { display: flex; flex-direction: column; gap: 0.2rem; }
+.brief .colophon dt, .brief .colophon .ck {
+  font-family: "IBM Plex Mono", monospace; font-size: 0.7rem;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--b-muted);
+}
+.brief .colophon .cv { font-size: 0.88rem; color: var(--b-ink-2); }
+
 .brief footer { margin-top: 4rem; padding-top: 1.5rem; border-top: 1px solid var(--b-line); font-size: 0.83rem; color: var(--b-muted); }
 
 
@@ -1260,11 +1319,18 @@ table.data tbody tr.is-idle:hover { background: transparent; }
     <nav class="nav" id="nav" aria-label="Fleet sections"></nav>
     <div class="rail__foot">
       <span class="concept" title="Unofficial concept. Every record below is fictional.">Concept · Demo data</span>
-      <a class="btn btn--secondary btn--sm btn--icon railinfo has-tip" href="#/about"
-         data-tip="Product brief — what this module is, why Modaltrans needs it, and the smallest scope that could ship."
-         aria-label="Product brief: why this module exists">
-        <svg class="ico ico--sm" aria-hidden="true"><use href="#i-info"/></svg>
-      </a>
+      <div class="who">
+        <span class="avatar" aria-hidden="true">SB</span>
+        <span class="who__text">
+          <span class="who__name">Selin Bayrak</span>
+          <span class="who__role">Dispatch</span>
+        </span>
+        <a class="btn btn--secondary btn--sm btn--icon railinfo has-tip" href="#/about"
+           data-tip="Opens the product brief: what this module is, why Modaltrans needs it, and the smallest scope that could ship."
+           aria-label="Read the product brief">
+          <svg class="ico ico--sm" aria-hidden="true"><use href="#i-info"/></svg>
+        </a>
+      </div>
     </div>
   </aside>
 
@@ -1272,14 +1338,12 @@ table.data tbody tr.is-idle:hover { background: transparent; }
     <header class="topbar">
       <h1 class="topbar__title" id="page-title">Overview</h1>
       <div class="topbar__actions">
-        <span class="u-row" style="gap:8px"><span class="avatar" aria-hidden="true">SB</span>
-          <span><span class="who__name">Selin Bayrak</span><br><span class="who__role">Dispatch</span></span></span>
-        <button class="btn btn--primary btn--sm" id="newtrip-btn" type="button"><svg class="ico ico--sm"><use href="#i-plus"/></svg>New trip</button>
-        <span class="nudge" id="tour-nudge" hidden>New here? The 90-second story
+        <a class="btn btn--primary btn--sm" id="newtrip-btn" href="#/assign"><svg class="ico ico--sm"><use href="#i-plus"/></svg>Assign a load</a>
+        <span class="nudge" id="tour-nudge" hidden>New here? Take the 90-second tour
           <button type="button" data-tour-act="dismiss" aria-label="Dismiss">
             <svg class="ico ico--sm"><use href="#i-x"/></svg></button></span>
         <button class="btn btn--secondary btn--sm" id="tour-btn" type="button">
-          <svg class="ico ico--sm"><use href="#i-play"/></svg>Play story
+          <svg class="ico ico--sm"><use href="#i-play"/></svg>Take the tour
         </button>
         <button class="btn btn--secondary btn--sm btn--icon" id="density-btn" type="button"
                 aria-label="Switch row density"><svg class="ico ico--sm"><use href="#i-rows"/></svg></button>
@@ -1738,7 +1802,17 @@ const Store = {
             drawer: { vehicleId: null, tab: "overview", returnTo: null }, tripTab: "active", maintFilter: null,
             sort: { key: "plate", dir: "asc" }, loading: false },
     };
+    /* Kept so the guided story can always run, however much the visitor
+       has already changed before pressing play. */
+    this.baseline = structuredClone({ vehicles, drivers, trips: this.state.trips });
     return this;
+  },
+
+  /** Back to the dataset the page loaded with. Clears undo along with it. */
+  reset() {
+    Object.assign(this.state, structuredClone(this.baseline));
+    this.history.length = 0;
+    this.emit();
   },
 
   subscribe(fn) { this.listeners.add(fn); },
@@ -2368,6 +2442,7 @@ const Sim = {
         t.drift = Math.min(0.08, (t.drift || 0) + 0.0016 + rnd() * 0.0012);
       });
     });
+    if (this.seconds % 5 === 0) A.advanceSimulation();   // odometers creep with the trucks
     this.paint();
     if (this.seconds === 20 && !this.fired) this.fireDelay();
   },
@@ -2457,7 +2532,7 @@ views.overview = () => {
         <div><div class="hero__num">${S.by("on_trip")}</div><div class="hero__cap">on trip</div></div>
         <div><div class="hero__num">${S.needAttention()}</div><div class="hero__cap">need attention</div></div>
       </div>
-      <button class="btn btn--onhero" type="button" data-attn="expired">Open worklist</button>
+      <button class="btn btn--onhero" type="button" data-attn="expired">Show the ${S.needAttention()} trucks</button>
     </section>
 
     <div class="grid-4">${tiles}</div>
@@ -2483,8 +2558,8 @@ views.overview = () => {
               </div>
               <div class="genie__body">Move TR-4471 to 34 TR 6135. It saves 340 km of empty running and clears the GVMS window by 4 hours.</div>
               <div class="genie__acts">
-                <button class="btn btn--primary btn--sm" type="button" data-genie="apply">Apply</button>
-                <button class="btn btn--ghost btn--sm" type="button" data-genie="dismiss">Dismiss</button>
+                <button class="btn btn--primary btn--sm" type="button" data-genie="apply">Move TR-4471 to 34 TR 6135</button>
+                <button class="btn btn--ghost btn--sm" type="button" data-genie="dismiss">Not now</button>
               </div>
             </div>
           </div>
@@ -2615,11 +2690,17 @@ views.vehicles = () => {
                  data-focus-id="vsearch" data-role="search" aria-label="Search vehicles">
           <span class="kbd" aria-hidden="true">/</span>
         </div>
-        <button class="btn btn--secondary btn--sm" type="button" data-filter="corridor">
-          ${ico("funnel", "ico ico--sm")}${u.corridor || "Corridor: all"}
-        </button>
-        <button class="btn btn--secondary btn--sm" type="button" data-filter="docs">
-          ${ico("clock", "ico ico--sm")}${u.docFilter ? "Docs: expiring" : "Docs: any"}
+        <label class="pick">
+          <span class="sr-only">Show one corridor</span>
+          ${ico("funnel", "ico ico--sm")}
+          <select data-corridor>
+            ${["", "TR → UK", "TR → DE", "TR → NL", "TR → IT", "TR → FR", "TR → RO"].map(c =>
+              `<option value="${c}" ${u.corridor === (c || null) ? "selected" : ""}>${c || "All corridors"}</option>`).join("")}
+          </select>
+        </label>
+        <button class="btn btn--secondary btn--sm" type="button" data-filter="docs"
+                aria-pressed="${!!u.docFilter}">
+          ${ico("clock", "ico ico--sm")}Only expiring documents
         </button>
         ${activeFilters.map(([k, label]) => `
           <span class="chip chip--outline">${label}
@@ -2634,10 +2715,10 @@ views.vehicles = () => {
         return v ? `<div class="bulkbar">
           <span class="u-strong">${esc(v.plate)} selected</span>
           <button class="btn btn--secondary btn--sm" type="button" data-assign-start="${v.id}"
-                  ${v.status === "available" ? "" : "disabled"}>Assign trip</button>
+                  ${v.status === "available" ? "" : "disabled"}>Find a load for it</button>
           <button class="btn btn--secondary btn--sm" type="button" data-service="${v.id}">Schedule service</button>
           <span class="u-grow"></span>
-          <button class="btn btn--ghost btn--sm" type="button" data-clear-selection>Clear</button>
+          <button class="btn btn--ghost btn--sm" type="button" data-clear-selection>Clear selection</button>
         </div>` : "";
       })() : ""}
       ${body}
@@ -3047,7 +3128,7 @@ function drawerTab(v, tab) {
         </span>
         ${docChip(d)}
         ${d.days <= 30 ? `<button class="btn btn--secondary btn--sm" type="button"
-            data-renew="${esc(d.type)}">Renew</button>` : ""}
+            data-renew="${esc(d.type)}" aria-label="Renew ${esc(d.type)} for another year">Renew</button>` : ""}
       </div>`).join("");
   }
 
@@ -3170,7 +3251,7 @@ function renderDrawer() {
       <div class="drawer__body">${drawerTab(v, d.tab)}</div>
       <div class="drawer__foot">
         <button class="btn btn--primary btn--sm" type="button" data-drawer-assign="${v.id}"
-                ${v.status === "available" ? "" : "disabled"}>Assign trip</button>
+                ${v.status === "available" ? "" : "disabled"}>Find a load for it</button>
         <button class="btn btn--secondary btn--sm" type="button" data-service="${v.id}">Schedule service</button>
         <span class="u-grow"></span>
         <button class="btn btn--ghost btn--sm" type="button" data-oos="${v.id}"
@@ -3350,6 +3431,89 @@ views.about = () => `
     </div>
   </section>
 
+
+  <details class="rationale">
+    <summary>Nasıl yapıldığı <span>· tasarım ve mühendislik kararları</span></summary>
+    <div class="rationale__body">
+
+      <div class="why">
+        <h4>Neden omurga atama akışı, dashboard değil?</h4>
+        <p>Güzel bir gösterge paneli yapmak daha kolaydı ve daha çabuk etkilerdi. Ama Modaltrans'ın
+        bütün satış argümanı “tek platform” — bir filo ekranının değeri, kendi içinde değil
+        diğer beş modüle değdiği yerde. Bu yüzden demonun merkezine tek bir tık koydum:
+        araç durumu, sefer zinciri, resmî bildirim, maliyet, karbon ve müşteri kaydı aynı anda
+        değişiyor. Ayrı duran bir ekran “arayüz yapabiliyor” der; bağlanan bir akış “ürünü anladım” der.</p>
+      </div>
+
+      <div class="why">
+        <h4>Neden altı menü öğesi, ikisi ayrı ekran değil?</h4>
+        <p><em>Documents</em> ve <em>Maintenance</em> kendi sayfaları değil, araç tablosunun ön ayarlı
+        hali. Tasarım sistemi bunları menüde listeliyordu; ayrı ekran yapsaydım ikisi de sığ kalırdı.
+        Bir günde altı zayıf ekran yerine dört dolu ekran ve iki dürüst kısayol tercih ettim.
+        Menüde ölü bağlantı bırakmak demoyu demo olmaktan çıkarır.</p>
+      </div>
+
+      <div class="why">
+        <h4>Tasarım sistemi nereden geldi?</h4>
+        <p>Token'lar Modaltrans'ın kendi sitesinden çıkarıldı: marka turuncusu
+        <span class="b-mono">oklch(.6399 .189 32.51)</span>, soğuk nötr gri rampası, General Sans.
+        Sistemin kendisinde bir boşluk buldum — tooltip ve toast gibi sayfaya <em>ters</em> çalışan
+        yüzeyler için bir rol yoktu, bileşenler ham renk skalasına iniyordu. Üç rol ekleyip kapattım.
+        Repoda bunu denetleyen bir kontrol var: hiçbir bileşen ham skalayı kullanamıyor.</p>
+      </div>
+
+      <div class="why">
+        <h4>Neden tek bir sayı elle yazılmadı?</h4>
+        <p>42 araç, %78 kullanım oranı, 12 belge, 7 dikkat isteyen araç — hepsi aynı veri kümesinden
+        hesaplanıyor. Bir aracı servis dışına aldığınızda altı yer birden değişiyor: hero, KPI,
+        uyarı listesi, menü rozeti, tablo, harita. Sahtelik hissi çirkinlikten değil
+        <strong>tutarsızlıktan</strong> gelir; bir yerde 42 yazıp başka yerde 41 gösteren bir demo
+        ilk bakışta ele verir.</p>
+      </div>
+
+      <div class="why">
+        <h4>Kontrast ölçüldü, varsayılmadı</h4>
+        <p>Marka turuncusu beyaz üstünde 3.66:1 — normal metin için WCAG AA'yı geçmiyor, ne renk
+        olarak ne de arkasında beyaz yazıyla. Rengi değiştirmek markadan ödün vermek olurdu; onun
+        yerine <strong>rolü böldüm</strong>: kimlik rengi şeritlerde ve noktalarda kaldı, metin
+        taşıyan ve arkasında yazı olan her yer daha koyu bir kardeşe geçti. Aynı ayrımı kenarlıkta
+        da yaptım — yapısal çizgiler ince, etkileşimli sınırlar 3:1. Ölçüm repoda duruyor ve
+        tekrar koşulabiliyor.</p>
+      </div>
+
+      <div class="why">
+        <h4>Neyi bilerek yapmadım</h4>
+        <p>Rota optimizasyonu, sürücü davranış skorlaması, taşeron self-servis portalı ve gerçek
+        harita servisi. Dördü de ayrı uzmanlık alanı; bir günde yarım yapmak kapsamı savunulamaz
+        hale getirirdi. Harita yerine şematik bir koridor diyagramı çizdim — kötü çizilmiş bir
+        dünya haritasından daha dürüst ve daha okunur.</p>
+      </div>
+
+      <div class="why">
+        <h4>Ne kadar test var, neden?</h4>
+        <p>280 kontrol ve 36 kontrast ölçümü. Sebebi gösteriş değil: veri katmanı büyüdükçe
+        sayılar sessizce ayrışıyordu. Bir denetim iki kamyonun aynı anda iki sefer taşıdığını,
+        bir başkası 28 aracın “yolda” görünüp ortada 4 sefer olduğunu yakaladı. İkisi de gözle
+        fark edilmezdi; ikisi de artık kalıcı testte.</p>
+      </div>
+
+      <div class="colophon">
+        <div><span class="ck">Yazı tipleri</span>
+          <span class="cv">General Sans (arayüz) · Archivo + IBM Plex (bu belge)</span></div>
+        <div><span class="ck">İkonlar</span>
+          <span class="cv">Elle çizilmiş çizgi seti, inline SVG</span></div>
+        <div><span class="ck">Veri</span>
+          <span class="cv">Kurgu; sektör bantlarına oturtulmuş (€1,42/km · %78 · 9.8 L/100km)</span></div>
+        <div><span class="ck">Yapı</span>
+          <span class="cv">Tek dosya, framework yok, bağımlılık yok</span></div>
+        <div><span class="ck">Kaynaklar</span>
+          <span class="cv">Modaltrans web sitesi ve entegrasyon listesi · U-ETDS mevzuatı ·
+          DVSA ve AETR kuralları · sektör kıyas verileri</span></div>
+      </div>
+
+    </div>
+  </details>
+
   <footer>
     Bağımsız konsept çalışması. Modaltrans'ın resmî ürünü ya da yol haritası değildir; şirketin kamuya açık web sitesi, entegrasyon listesi ve sektör kaynakları üzerinden hazırlanmıştır. Demodaki tüm kayıtlar kurgudur.
   </footer>
@@ -3385,6 +3549,7 @@ const TOUR = [
     text: () => `${S.unassignedTrips().length} of them are loads with no truck yet.`,
     sub: () => {
       const t = tourLeg();
+      if (!t) return "Every leg has a truck right now — press Play again to reset the demo.";
       return `Take ${t.ref} — ${t.origin} to ${t.destination}, ${t.weightT}t${t.adr ? ", and it is dangerous goods" : ""}.`;
     },
     enter() {
@@ -3398,13 +3563,17 @@ const TOUR = [
   {
     text: () => "The system checks compliance before you commit.",
     sub: () => {
-      const r = tourBlocked(tourLeg().ref);
+      const leg = tourLeg();
+      if (!leg) return "Nothing is waiting for a truck at the moment.";
+      const r = tourBlocked(leg.ref);
+      if (!r) return "No candidate to check against right now.";
       const bad = r.checks.find(c => c.level === "bad");
       return `${r.vehicle.plate} is free and certified — but ${bad ? bad.why.toLowerCase() : "a check fails"}. Assign stays locked.`;
     },
     enter() {
-      const r = tourBlocked(tourLeg().ref);
-      Object.assign(Store.state.ui.assign, { vehicleId: r.vehicle.id, driverId: null, done: null });
+      const leg = tourLeg();
+      const r = leg && tourBlocked(leg.ref);
+      if (r) Object.assign(Store.state.ui.assign, { vehicleId: r.vehicle.id, driverId: null, done: null });
       location.hash = "#/assign";
     },
     target: () => '[data-rank][aria-selected="true"]',
@@ -3414,7 +3583,8 @@ const TOUR = [
     sub: () => "Swapping in a rested driver clears the block. Everything below happened from that one confirmation.",
     enter() {
       const leg = tourLeg();
-      const r = tourBlocked(leg.ref);
+      const r = leg && tourBlocked(leg.ref);
+      if (!leg || !r) { location.hash = "#/assign"; return; }
       const fix = r.checks.find(c => c.act && c.act.type === "swapDriver");
       const driverId = fix ? fix.act.driverId : null;
       A.assignVehicle(leg.ref, r.vehicle.id, driverId);
@@ -3443,6 +3613,12 @@ const Tour = {
   markSeen() { try { localStorage.setItem("mt-tour-seen", "1"); } catch {} },
 
   start() {
+    /* Every leg already assigned means steps two and three have nothing to
+       point at. Put the demo back rather than showing a broken story. */
+    if (!S.unassignedTrips().length) {
+      Store.reset();
+      toast("Demo data reset so the story can run from the top.");
+    }
     this.active = true; this.step = 0; this.committed = false; this.tripRef = null;
     this.simWas = Sim.running;
     Sim.stop();                       // otherwise pins drift and a delay toast lands mid-sentence
@@ -3494,8 +3670,8 @@ const Tour = {
           <span class="u-grow"></span>
           ${last
             ? `<button class="btn btn--ghost btn--sm" type="button" data-tour-act="replay">Replay</button>
-               <button class="btn btn--primary btn--sm" type="button" data-tour-act="done">Done</button>`
-            : `<button class="btn btn--ghost btn--sm" type="button" data-tour-act="skip">Skip tour</button>
+               <button class="btn btn--primary btn--sm" type="button" data-tour-act="done">Close and keep exploring</button>`
+            : `<button class="btn btn--ghost btn--sm" type="button" data-tour-act="skip">Skip the tour</button>
                <button class="btn btn--primary btn--sm" type="button" data-tour-act="next">Next</button>`}
         </div>
       </div>`;
@@ -3568,6 +3744,7 @@ document.addEventListener("click", e => {
   if (hit("#theme-btn")) return Prefs.toggleTheme();
   if (hit("#density-btn")) return Prefs.toggleDensity();
   if (hit("#tour-btn")) return Tour.start();
+  if (hit("#newtrip-btn")) return;   // a real link; let it navigate
 
   const tourBtn = hit("[data-tour-act]");
   if (tourBtn) {
@@ -3642,10 +3819,6 @@ document.addEventListener("click", e => {
 
   const filter = hit("[data-filter]");
   if (filter) {
-    if (filter.dataset.filter === "corridor") {
-      const order = [null, "TR → UK", "TR → DE", "TR → NL"];
-      return Store.uiSlow({ corridor: order[(order.indexOf(Store.state.ui.corridor) + 1) % order.length] });
-    }
     return Store.uiSlow({ docFilter: Store.state.ui.docFilter ? null : "expiring" });
   }
 
@@ -3685,8 +3858,16 @@ document.addEventListener("click", e => {
     const a = assignState();
     const kind = fixBtn.dataset.fix;
     if (kind === "swapDriver") return setAssign({ driverId: fixBtn.dataset.fixDriver });
-    if (kind === "renew") { A.renewDocument(a.vehicleId); return toast("Documents renewed."); }
-    if (kind === "service") { A.scheduleMaintenance(a.vehicleId); return toast("Service booked for 15 Sep."); }
+    if (kind === "renew") {
+      A.renewDocument(a.vehicleId);
+      return toast("Documents renewed — valid for another year.",
+        { action: "Undo", onAction: () => { A.undo(); toast("Renewal undone."); } });
+    }
+    if (kind === "service") {
+      A.scheduleMaintenance(a.vehicleId);
+      return toast("Service booked for 15 Sep.",
+        { action: "Undo", onAction: () => { A.undo(); toast("Booking undone."); } });
+    }
     return;
   }
 
@@ -3727,6 +3908,10 @@ document.addEventListener("click", e => {
 
 document.addEventListener("input", e => {
   if (e.target.dataset.role === "search") Store.ui({ q: e.target.value });
+});
+
+document.addEventListener("change", e => {
+  if ("corridor" in e.target.dataset) Store.uiSlow({ corridor: e.target.value || null });
 });
 
 document.addEventListener("keydown", e => {

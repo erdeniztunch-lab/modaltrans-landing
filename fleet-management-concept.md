@@ -474,6 +474,33 @@ Sekmeler: `Overview` · `Compliance` · `Maintenance` · `Costs` · `Trips` · `
 - Tek isim, tek kavram — sitede `7/24 Canlı Destek` / `7/24 Gerçek Destek` / `Canlı Sohbet`
   gibi üçlü isim karmaşası var; burada asla olmayacak
 
+### 13.1 CTA kuralı — tıklamadan önce ne olacağını bil
+
+Her buton, **açacağı ekranı ya da yapacağı değişikliği adıyla** söyler. İki şey yasak:
+
+1. **Genel fiiller** — `Apply`, `Submit`, `Open`, `Done`, `Continue`, `Clear`. Hiçbiri
+   neyin değişeceğini söylemiyor.
+2. **Mevcut durumu gösteren etiketler** — `Corridor: all` gibi. Bir butonun üzerinde
+   bugünkü değer yazıyorsa, tıklayınca ne olacağı belirsizdir. Bunlar buton değil,
+   gerçek kontrol olmalı: `<select>`, ya da `aria-pressed` taşıyan bir anahtar.
+
+| Böyle değil | Böyle |
+|---|---|
+| `Apply` | `Move TR-4471 to 34 TR 6135` |
+| `Open worklist` | `Show the 7 trucks` |
+| `New trip` | `Assign a load` |
+| `Play story` | `Take the tour` |
+| `Clear` | `Clear selection` |
+| `Done` | `Close and keep exploring` |
+| `Corridor: all` (döngü buton) | koridor seçicisi |
+
+Sadece ikon taşıyan her kontrolde `aria-label` zorunlu — orada tahmin edilecek hiçbir
+metin yok. Tek istisna **sıra kontrolleri** (`Next`, `Replay`): anlamlarını numaralı bir
+akış içindeki yerlerinden alırlar.
+
+Kural `tests/cta-clarity.cjs` ile denetleniyor; yeni bir buton eklerken o test düşerse
+etiket yanlıştır.
+
 ---
 
 ## 14. Teknik kısıtlar (Artifact ortamı)
