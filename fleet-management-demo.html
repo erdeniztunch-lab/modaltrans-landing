@@ -82,6 +82,7 @@
   --surface-inverse: var(--gray-900);
   --on-surface-inverse: var(--gray-050);
   --surface-inverse-br: transparent;
+  --scrim: oklch(0.132 0.008 264 / .45);
 
   /* Text on a status fill, and on the fixed-dark hero */
   --on-status: oklch(1 0 0);
@@ -168,6 +169,7 @@
   --neutral-fg: oklch(0.712 0.012 264); --neutral-bg: oklch(0.262 0.010 264); --neutral-br: oklch(0.332 0.012 264);
   --surface-inverse: var(--surface-3); --on-surface-inverse: var(--text); --surface-inverse-br: var(--border);
   --on-status: var(--gray-990);
+  --scrim: oklch(0 0 0 / .62);
   --focus-ring: 0 0 0 2px var(--surface), 0 0 0 4px oklch(0.748 0.152 34 / 0.65);
   --shadow-card: none;
   --shadow-pop: 0 12px 32px -8px oklch(0 0 0 / 0.55);
@@ -205,6 +207,7 @@
     --neutral-fg: oklch(0.712 0.012 264); --neutral-bg: oklch(0.262 0.010 264); --neutral-br: oklch(0.332 0.012 264);
   --surface-inverse: var(--surface-3); --on-surface-inverse: var(--text); --surface-inverse-br: var(--border);
   --on-status: var(--gray-990);
+  --scrim: oklch(0 0 0 / .62);
     --focus-ring: 0 0 0 2px var(--surface), 0 0 0 4px oklch(0.748 0.152 34 / 0.65);
     --shadow-card: none;
     --shadow-pop: 0 12px 32px -8px oklch(0 0 0 / 0.55);
@@ -834,6 +837,73 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
 }
 .result__what { font-size: var(--fs-sm); }
 
+
+/* ============================================================================
+   VEHICLE DRAWER — one detail surface, opened from the table, the map,
+   and (from Phase 6) trips and drivers.
+   ========================================================================= */
+.scrim { position: fixed; inset: 0; z-index: 60; background: var(--scrim); animation: fade .16s linear; }
+@keyframes fade { from { opacity: 0; } }
+
+.drawer {
+  position: fixed; top: 0; right: 0; bottom: 0; z-index: 61;
+  width: min(30rem, 100%);
+  display: flex; flex-direction: column;
+  background: var(--surface); border-left: 1px solid var(--border);
+  border-radius: var(--r-panel) 0 0 var(--r-panel);
+  box-shadow: var(--shadow-modal);
+  animation: slidein var(--dur-move) var(--ease);
+}
+@keyframes slidein { from { translate: 1.5rem 0; opacity: 0; } }
+
+.drawer__head { padding: var(--sp-6); border-bottom: 1px solid var(--border); }
+.drawer__title { display: flex; align-items: center; gap: var(--sp-4); flex-wrap: wrap; }
+.drawer__title h2 { font-size: var(--fs-xl); letter-spacing: .02em; font-variant-numeric: tabular-nums; }
+.drawer__title:focus { outline: none; }
+.drawer__sub { margin-top: var(--sp-2); font-size: var(--fs-sm); color: var(--text-muted); }
+.drawer__x { margin-left: auto; }
+.drawer__tabs { padding: 0 var(--sp-6); border-bottom: 1px solid var(--border); }
+.drawer__tabs .tabs { border-bottom: 0; gap: var(--sp-6); overflow-x: auto; }
+.drawer__body { flex: 1; overflow-y: auto; padding: var(--sp-6); }
+.drawer__foot {
+  display: flex; align-items: center; gap: var(--sp-4); flex-wrap: wrap;
+  padding: var(--sp-5) var(--sp-6); border-top: 1px solid var(--border); background: var(--surface);
+}
+
+/* --- key/value rows ------------------------------------------------------ */
+.kv { display: flex; gap: var(--sp-5); align-items: baseline; padding: 9px 0; border-bottom: 1px solid var(--border); }
+.kv:last-child { border-bottom: 0; }
+.kv__k {
+  width: 118px; flex: none;
+  font-size: var(--fs-micro); font-weight: var(--w-label);
+  letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted);
+}
+.kv__v { font-size: var(--fs-sm); }
+
+/* --- document row -------------------------------------------------------- */
+.doc { display: flex; align-items: center; gap: var(--sp-4); padding: 10px 0; border-bottom: 1px solid var(--border); }
+.doc:last-child { border-bottom: 0; }
+.doc__name { font-size: var(--fs-sm); font-weight: var(--w-label); }
+.doc__ref { font-size: var(--fs-micro); color: var(--text-muted); font-variant-numeric: tabular-nums; }
+
+/* --- maintenance buckets ------------------------------------------------- */
+.bucket { margin-bottom: var(--sp-6); }
+.bucket__head { display: flex; align-items: center; gap: var(--sp-4); margin-bottom: var(--sp-4); }
+.bucket__title { font-size: var(--fs-micro); font-weight: var(--w-label); letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); }
+.bucket__empty { font-size: var(--fs-sm); color: var(--text-muted); }
+
+/* --- cost bar ------------------------------------------------------------ */
+.bar { height: 8px; border-radius: var(--r-pill); background: var(--surface-3); overflow: hidden; display: flex; }
+.bar span { display: block; height: 100%; }
+.barkey { display: flex; flex-wrap: wrap; gap: var(--sp-5); margin-top: var(--sp-4); font-size: var(--fs-xs); color: var(--text-muted); }
+.barkey i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 5px; }
+
+@media (max-width: 520px) {
+  .drawer { width: 100%; border-radius: 0; }
+  .kv { flex-direction: column; gap: 2px; }
+  .kv__k { width: auto; }
+}
+
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
@@ -901,6 +971,7 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
   </div>
 </div>
 
+<div id="drawer-host"></div>
 <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
 
 <script>
@@ -1027,6 +1098,84 @@ function buildVehicles() {
   return list;
 }
 
+/* ============================================================================
+   PAPERWORK & TELEMETRY
+   The table already shows a one-chip summary per vehicle. That summary is now
+   DERIVED from a real document list, so the drawer and the counters can never
+   drift apart: renewing a paper in the drawer moves the Overview badge.
+   ========================================================================= */
+const NOW = new Date();
+const dateIn = d => {
+  const x = new Date(NOW); x.setDate(x.getDate() + d);
+  return x.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+};
+
+const DOC_TR = ["Muayene", "K1 Yetki Belgesi", "Trafik sigortası", "Egzoz emisyon"];
+const DOC_UK = ["O-Licence", "Tacho calibration"];   /* a truck running to the UK needs these too */
+const DOC_REF = { "Muayene": "TUV", "K1 Yetki Belgesi": "K1", "Trafik sigortası": "INS",
+                  "Egzoz emisyon": "EMI", "O-Licence": "OL", "Tacho calibration": "TAC", "ADR": "ADR" };
+
+function docTypesFor(v) {
+  const t = [...DOC_TR];
+  if (v.corridor === "TR → UK") t.push(...DOC_UK);
+  if (v.adr) t.push("ADR");
+  return t;
+}
+
+/** Worst paper wins: expired beats expiring beats valid. */
+function docsSummary(list) {
+  const expired = list.filter(d => d.days < 0);
+  if (expired.length) return { state: "expired", days: Math.min(...expired.map(d => -d.days)) };
+  const soon = list.filter(d => d.days <= 30);
+  if (soon.length) return { state: "expiring", days: Math.min(...soon.map(d => d.days)) };
+  return { state: "valid" };
+}
+
+const TELEMETRY_LABEL = { arvento: "Arvento", mobiliz: "Mobiliz", motive: "Motive" };
+const PLACES = ["Kapıkule, TR", "Edirne, TR", "Sofia, BG", "Belgrade, RS", "Trieste, IT",
+                "Calais, FR", "Dover, UK", "Rotterdam, NL", "Gebze, TR", "Ambarlı, TR"];
+const SERVICE_TYPES = ["Full service", "Brake overhaul", "Tyre change", "Clutch", "Oil and filters"];
+
+/** Runs AFTER every vehicle exists, so the seeded sequence above is untouched. */
+function enrichVehicles(list) {
+  list.forEach(v => {
+    /* one paper carries the state the summary already had, the rest are clean */
+    const types = docTypesFor(v);
+    const carriesIt = v.docs.state === "expired" || v.docs.state === "expiring"
+      ? types[Math.floor(rnd() * types.length)] : null;
+
+    v.documents = types.map(type => {
+      const days = type === carriesIt
+        ? (v.docs.state === "expired" ? -v.docs.days : v.docs.days)
+        : 60 + Math.floor(rnd() * 640);
+      return { type, ref: `${DOC_REF[type]}-${100000 + Math.floor(rnd() * 899999)}`, days, validUntil: dateIn(days) };
+    });
+    v.docs = docsSummary(v.documents);
+
+    /* Modaltrans already integrates all three of these */
+    v.telemetry = {
+      source: v.ownership === "own" ? (rnd() < 0.6 ? "arvento" : "mobiliz") : "motive",
+      minutesAgo: 1 + Math.floor(rnd() * 14),
+      speedKph: v.status === "on_trip" ? 58 + Math.floor(rnd() * 32) : 0,
+      engineHours: 8000 + Math.floor(rnd() * 22000),
+      place: PLACES[Math.floor(rnd() * PLACES.length)],
+    };
+
+    let km = v.km;
+    v.services = Array.from({ length: 3 }, () => {
+      km -= 20000 + Math.floor(rnd() * 40000);
+      return {
+        type: SERVICE_TYPES[Math.floor(rnd() * SERVICE_TYPES.length)],
+        on: dateIn(-(30 + Math.floor(rnd() * 500))),
+        km: Math.max(0, km),
+        cost: 400 + Math.floor(rnd() * 2600),
+      };
+    });
+  });
+  return list;
+}
+
+
 const hm = min => `${Math.floor(min / 60)}h ${String(min % 60).padStart(2, "0")}m`;
 
 /* --- Drivers --------------------------------------------------------------
@@ -1140,13 +1289,14 @@ const Store = {
   listeners: new Set(),
 
   init() {
-    const vehicles = buildVehicles();
+    const vehicles = enrichVehicles(buildVehicles());
     this.state = {
       vehicles,
       drivers: buildDrivers(vehicles),
       trips: TRIPS.map(t => ({ ...t })),
       ui: { scope: "own", tab: "all", q: "", corridor: null, docFilter: null, selected: null, page: 0,
-            assign: { tripRef: null, vehicleId: null, driverId: null, showAll: false, done: null } },
+            assign: { tripRef: null, vehicleId: null, driverId: null, showAll: false, done: null },
+            drawer: { vehicleId: null, tab: "overview", returnTo: null } },
     };
     return this;
   },
@@ -1222,10 +1372,14 @@ const A = {
     });
   },
 
-  renewDocument(vehicleId) {
-    return Store.commit("Renew documents", st => {
+  renewDocument(vehicleId, type = null) {
+    return Store.commit(type ? `Renew ${type}` : "Renew documents", st => {
       const v = st.vehicles.find(x => x.id === vehicleId);
-      if (v) v.docs = { state: "valid" };
+      if (!v) return;
+      const fresh = d => { d.days = 400; d.validUntil = dateIn(400); };
+      if (type) { const d = v.documents.find(x => x.type === type); if (d) fresh(d); }
+      else v.documents.filter(d => d.days <= 30).forEach(fresh);
+      v.docs = docsSummary(v.documents);
     });
   },
 
@@ -1499,6 +1653,7 @@ function render() {
   document.title = `${route.title} — Modaltrans Fleet`;
   host.innerHTML = (views[route.id] || (() => ""))();
   renderNav();
+  renderDrawer();
 
   if (focusId) {
     const el = host.querySelector(`[data-focus-id="${focusId}"]`);
@@ -1613,11 +1768,18 @@ views.overview = () => {
           <span class="u-xs u-muted">${S.by("on_trip")} on the road</span>
         </div>
         <div class="map">
-          <button class="pin pin--info" style="left:18%;top:30%" aria-label="Vehicle on trip">${ico("truck")}</button>
-          <button class="pin pin--sel"  style="left:44%;top:20%" aria-label="Selected trip TR-4471">${ico("truck")}</button>
-          <button class="pin pin--bad"  style="left:68%;top:46%" aria-label="Blocked vehicle">${ico("alert")}</button>
-          <span class="cluster" style="left:30%;top:60%">12</span>
-          <button class="pin pin--ok"   style="left:56%;top:66%" aria-label="Delivered">${ico("check-circle")}</button>
+          ${(() => {
+            const onTrip = S.all().find(v => v.status === "on_trip");
+            const bad = S.all().find(v => v.docs.state === "expired") || onTrip;
+            const ok = S.all().find(v => v.status === "available") || onTrip;
+            const pin = (cls, v, label, icon, pos) => v ? `<button class="pin ${cls}" style="${pos}"
+              data-vehicle="${v.id}" aria-label="${label}: ${esc(v.plate)}">${ico(icon)}</button>` : "";
+            return pin("pin--info", onTrip, "On trip", "truck", "left:18%;top:30%")
+                 + pin("pin--sel", S.all().find(v => v.id === storyTrip.vehicleId), "Selected trip " + storyTrip.ref, "truck", "left:44%;top:20%")
+                 + pin("pin--bad", bad, "Blocked", "alert", "left:68%;top:46%")
+                 + `<span class="cluster" style="left:30%;top:60%">12</span>`
+                 + pin("pin--ok", ok, "Delivered", "check-circle", "left:56%;top:66%");
+          })()}
         </div>
         <div class="legend">
           <span><i style="background:var(--info-fg)"></i>On trip</span>
@@ -1674,8 +1836,8 @@ views.vehicles = () => {
         <tbody>
           ${rows.map(v => `
             <tr data-vehicle="${v.id}" tabindex="0" aria-selected="${u.selected === v.id}">
-              <td><input class="check" type="checkbox" ${u.selected === v.id ? "checked" : ""}
-                         aria-label="Select ${esc(v.plate)}" tabindex="-1"></td>
+              <td><input class="check" type="checkbox" data-select="${v.id}" ${u.selected === v.id ? "checked" : ""}
+                         aria-label="Select ${esc(v.plate)}"></td>
               <td><span class="identifier" style="color:var(--text)">${esc(v.plate)}</span></td>
               <td><span class="cell-2"><b class="u-truncate">${esc(v.driver || "—")}</b>
                   <span class="u-truncate">${esc(v.model)}${v.carrier ? " · " + esc(v.carrier) : ""}</span></span></td>
@@ -1954,6 +2116,181 @@ views.assign = () => {
 };
 
 /* ============================================================================
+   VEHICLE DRAWER
+   ========================================================================= */
+const DRAWER_TABS = [
+  ["overview", "Overview"], ["documents", "Documents"], ["maintenance", "Maintenance"],
+  ["costs", "Costs"], ["telemetry", "Telemetry"],
+];
+
+const docChip = d => d.days < 0
+  ? `<span class="chip chip--bad">${ico("alert", "ico ico--sm")}Expired ${-d.days}d ago</span>`
+  : d.days <= 30
+    ? `<span class="chip chip--warn">${ico("clock", "ico ico--sm")}Expires in ${d.days}d</span>`
+    : `<span class="chip chip--ok">${ico("check-circle", "ico ico--sm")}Valid</span>`;
+
+const kv = (k, v) => `<div class="kv"><span class="kv__k">${k}</span><span class="kv__v">${v}</span></div>`;
+
+function drawerTab(v, tab) {
+  const driver = S.driverFor(v);
+  const trip = S.trips().find(t => t.vehicleId === v.id);
+
+  if (tab === "documents") {
+    return v.documents.map(d => `
+      <div class="doc">
+        <span class="u-grow">
+          <span class="doc__name">${esc(d.type)}</span><br>
+          <span class="doc__ref">${esc(d.ref)} · until ${d.validUntil}</span>
+        </span>
+        ${docChip(d)}
+        ${d.days <= 30 ? `<button class="btn btn--secondary btn--sm" type="button"
+            data-renew="${esc(d.type)}">Renew</button>` : ""}
+      </div>`).join("");
+  }
+
+  if (tab === "maintenance") {
+    const m = v.maint;
+    const buckets = [
+      ["Overdue", "bad", m.state === "overdue" ? `${nfmt(m.km)} km past the service window` : null],
+      ["Due", "warn", m.state === "due" ? `In ${nfmt(m.km)} km` : null],
+      ["Scheduled", "info", m.state === "scheduled" ? `Booked for ${m.on}` : m.state === "serviced" ? null : null],
+    ];
+    return buckets.map(([title, sem, text]) => `
+      <div class="bucket">
+        <div class="bucket__head"><span class="bucket__title">${title}</span></div>
+        ${text ? `<span class="chip chip--${sem}">${ico(sem === "bad" ? "alert" : sem === "warn" ? "clock" : "calendar", "ico ico--sm")}${text}</span>`
+               : `<span class="bucket__empty">Nothing in this bucket.</span>`}
+      </div>`).join("") + `
+      <div class="bucket">
+        <div class="bucket__head"><span class="bucket__title">Service history</span></div>
+        ${v.services.map(s => `
+          <div class="doc">
+            <span class="u-grow"><span class="doc__name">${esc(s.type)}</span><br>
+              <span class="doc__ref">${s.on} · ${nfmt(s.km)} km</span></span>
+            <span class="u-sm tnum">€${nfmt(s.cost)}</span>
+          </div>`).join("")}
+      </div>`;
+  }
+
+  if (tab === "costs") {
+    const fuel = +(v.costPerKm * 0.62).toFixed(2);
+    const tolls = +(v.costPerKm * 0.14).toFixed(2);
+    const rest = +(v.costPerKm - fuel - tolls).toFixed(2);
+    const fleet = +S.costPerKm();
+    const delta = +(v.costPerKm - fleet).toFixed(2);
+    const pct = n => (n / v.costPerKm * 100).toFixed(1) + "%";
+    return `
+      <div class="kv"><span class="kv__k">All-in</span>
+        <span class="kv__v"><b class="tnum">€${v.costPerKm.toFixed(2)}</b> per km</span></div>
+      <div style="margin:var(--sp-5) 0">
+        <div class="bar">
+          <span style="width:${pct(fuel)};background:var(--accent)"></span>
+          <span style="width:${pct(tolls)};background:var(--info-fg)"></span>
+          <span style="width:${pct(rest)};background:var(--border-strong)"></span>
+        </div>
+        <div class="barkey">
+          <span><i style="background:var(--accent)"></i>Fuel €${fuel.toFixed(2)}</span>
+          <span><i style="background:var(--info-fg)"></i>Tolls €${tolls.toFixed(2)}</span>
+          <span><i style="background:var(--border-strong)"></i>Driver &amp; other €${rest.toFixed(2)}</span>
+        </div>
+      </div>
+      ${kv("Fleet average", `<span class="tnum">€${fleet.toFixed(2)}</span> / km`)}
+      ${kv("This vehicle", delta === 0 ? "On the fleet average"
+        : `<span class="chip chip--${delta > 0 ? "warn" : "ok"}">${ico(delta > 0 ? "arrow-u" : "arrow-d", "ico ico--sm")}€${Math.abs(delta).toFixed(2)} ${delta > 0 ? "above" : "below"} average</span>`)}
+      ${kv("Odometer", `<span class="tnum">${nfmt(v.km)}</span> km`)}
+      <p class="u-xs u-muted" style="margin-top:var(--sp-5)">
+        The EU average for a heavy truck is about €1.42 per km, so this fleet sits where it should.</p>`;
+  }
+
+  if (tab === "telemetry") {
+    const t = v.telemetry;
+    return `
+      ${kv("Source", `<span class="chip chip--info tip" data-tip="Modaltrans already integrates ${TELEMETRY_LABEL[t.source]}; Fleet Management reads that feed rather than replacing it.">${ico("truck", "ico ico--sm")}${TELEMETRY_LABEL[t.source]}</span>`)}
+      ${kv("Last update", `${t.minutesAgo} min ago`)}
+      ${kv("Speed", `<span class="tnum">${t.speedKph}</span> km/h${t.speedKph === 0 ? " — stationary" : ""}`)}
+      ${kv("Position", esc(t.place))}
+      ${kv("Engine hours", `<span class="tnum">${nfmt(t.engineHours)}</span> h`)}
+      <p class="u-xs u-muted" style="margin-top:var(--sp-5)">
+        Position and engine data arrive from the telematics box. Fleet Management turns them
+        into decisions — it is not a tracking product of its own.</p>`;
+  }
+
+  /* overview */
+  return `
+    ${kv("Driver", driver ? `${esc(driver.name)} · <span class="tnum">${hm(driver.minutesLeft)}</span> left today` : "No driver assigned")}
+    ${kv("Status", chip(T_STATUS[v.status]))}
+    ${kv("Ownership", v.ownership === "own" ? "Own fleet" : `Subcontracted · ${esc(v.carrier)}`)}
+    ${kv("Corridor", esc(v.corridor))}
+    ${kv("Odometer", `<span class="tnum">${nfmt(v.km)}</span> km`)}
+    ${kv("Documents", chip(T_DOCS[v.docs.state](v.docs)))}
+    ${kv("Maintenance", chip(T_MAINT[v.maint.state](v.maint)))}
+    ${trip ? `<div style="margin-top:var(--sp-6)">
+      <div class="bucket__title" style="margin-bottom:var(--sp-4)">Current trip · ${esc(trip.ref)}</div>
+      <div class="u-sm u-dim">${esc(trip.origin)} → ${esc(trip.destination)} · ETA ${trip.eta}</div>
+      <div class="chain" style="padding-left:0;padding-right:0">${chainFor(trip).map(([name, state, icn, meta, tone], i) => `
+        <div class="chain__step">
+          <span class="chain__line" style="${i === 0 ? "left:50%;right:0" : i === 5 ? "left:0;right:50%" : "left:0;right:0"};
+            background:${state === "done" || state === "current" ? "var(--ok-fg)" : "var(--border-strong)"}"></span>
+          <span class="chain__node chain__node--${state}">${ico(icn, "ico ico--sm")}</span>
+          <span class="chain__name">${name}</span>
+          <span class="chain__meta${tone ? " chain__meta--" + tone : ""}">${meta}</span>
+        </div>`).join("")}</div>
+    </div>` : ""}`;
+}
+
+function renderDrawer() {
+  const host = document.getElementById("drawer-host");
+  if (!host) return;
+  const d = Store.state.ui.drawer;
+  const v = d.vehicleId ? S.all().find(x => x.id === d.vehicleId) : null;
+
+  if (!v) { host.innerHTML = ""; document.body.style.overflow = ""; return; }
+
+  host.innerHTML = `
+    <div class="scrim" data-drawer-close></div>
+    <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title">
+      <div class="drawer__head">
+        <div class="drawer__title" id="drawer-title" tabindex="-1">
+          <h2 class="identifier">${esc(v.plate)}</h2>
+          ${chip(T_STATUS[v.status])}
+          <button class="btn btn--ghost btn--sm btn--icon drawer__x" type="button"
+                  data-drawer-close aria-label="Close vehicle details">${ico("x", "ico ico--sm")}</button>
+        </div>
+        <div class="drawer__sub">${esc(v.model)} · ${esc(v.corridor)}${v.carrier ? " · " + esc(v.carrier) : ""}</div>
+      </div>
+      <div class="drawer__tabs">
+        <div class="tabs" role="tablist" aria-label="Vehicle detail sections">
+          ${DRAWER_TABS.map(([k, label]) => `
+            <button role="tab" type="button" data-drawer-tab="${k}" aria-selected="${d.tab === k}">${label}</button>`).join("")}
+        </div>
+      </div>
+      <div class="drawer__body">${drawerTab(v, d.tab)}</div>
+      <div class="drawer__foot">
+        <button class="btn btn--primary btn--sm" type="button" data-drawer-assign="${v.id}"
+                ${v.status === "available" ? "" : "disabled"}>Assign trip</button>
+        <button class="btn btn--secondary btn--sm" type="button" data-service="${v.id}">Schedule service</button>
+        <span class="u-grow"></span>
+        <button class="btn btn--ghost btn--sm" type="button" data-oos="${v.id}"
+                ${v.status === "out_of_service" ? "disabled" : ""}>Take out of service</button>
+      </div>
+    </aside>`;
+
+  document.body.style.overflow = "hidden";
+  host.querySelector("#drawer-title")?.focus({ preventScroll: true });
+}
+
+function openDrawer(vehicleId, trigger) {
+  Store.state.ui.drawer = { vehicleId, tab: "overview", returnTo: trigger || null };
+  Store.emit();
+}
+function closeDrawer() {
+  const back = Store.state.ui.drawer.returnTo;
+  Store.state.ui.drawer = { vehicleId: null, tab: "overview", returnTo: null };
+  Store.emit();
+  if (back) { const el = document.querySelector(back); el?.focus(); }
+}
+
+/* ============================================================================
    EVENTS — one delegated listener for the whole app
    ========================================================================= */
 document.addEventListener("click", e => {
@@ -1963,6 +2300,35 @@ document.addEventListener("click", e => {
   if (hit("#theme-btn")) return Prefs.toggleTheme();
   if (hit("#density-btn")) return Prefs.toggleDensity();
   if (hit("#tour-btn")) return toast("The guided story arrives in Phase 8.");
+
+  /* --- drawer --------------------------------------------------------- */
+  if (hit("[data-drawer-close]")) return closeDrawer();
+
+  const dTab = hit("[data-drawer-tab]");
+  if (dTab) { Store.state.ui.drawer.tab = dTab.dataset.drawerTab; return Store.emit(); }
+
+  const renew = hit("[data-renew]");
+  if (renew) {
+    const type = renew.dataset.renew;
+    A.renewDocument(Store.state.ui.drawer.vehicleId, type);
+    return toast(`${type} renewed — valid for another year.`,
+      { action: "Undo", onAction: () => { A.undo(); toast("Renewal undone."); } });
+  }
+
+  const oos = hit("[data-oos]");
+  if (oos) {
+    A.takeOutOfService(oos.dataset.oos);
+    return toast("Vehicle taken out of service.",
+      { action: "Undo", onAction: () => { A.undo(); toast("Back in service."); } });
+  }
+
+  const dAssign = hit("[data-drawer-assign]");
+  if (dAssign) {
+    Object.assign(Store.state.ui.assign, { vehicleId: dAssign.dataset.drawerAssign, driverId: null, done: null });
+    closeDrawer();
+    location.hash = "#/assign";
+    return;
+  }
 
   const scope = hit("[data-scope]");
   if (scope) return Store.ui({ scope: scope.dataset.scope, page: 0, selected: null });
@@ -1995,11 +2361,14 @@ document.addEventListener("click", e => {
   if (svc) { A.scheduleMaintenance(svc.dataset.service); return toast("Service booked for 15 Sep.", { action: "Undo", onAction: () => { A.undo(); toast("Booking undone."); } }); }
   if (hit("[data-clear-selection]")) return Store.ui({ selected: null });
 
-  const row = hit("[data-vehicle]");
-  if (row) {
-    const id = row.dataset.vehicle;
+  const box = hit("[data-select]");
+  if (box) {
+    const id = box.dataset.select;
     return Store.ui({ selected: Store.state.ui.selected === id ? null : id });
   }
+
+  const row = hit("[data-vehicle]");
+  if (row) return openDrawer(row.dataset.vehicle, `[data-vehicle="${row.dataset.vehicle}"]`);
 
   const attn = hit("[data-attn]");
   if (attn) {
@@ -2062,6 +2431,21 @@ document.addEventListener("input", e => {
 });
 
 document.addEventListener("keydown", e => {
+  const open = Store.state.ui.drawer.vehicleId;
+  if (open && e.key === "Escape") { e.preventDefault(); return closeDrawer(); }
+  if (open && e.key === "Tab") {
+    const f = [...document.querySelectorAll(
+      ".drawer a[href], .drawer button:not([disabled]), .drawer input:not([disabled]), .drawer [tabindex]:not([tabindex='-1'])")];
+    if (!f.length) return;
+    const first = f[0], last = f[f.length - 1];
+    if (e.shiftKey && (document.activeElement === first || !document.querySelector(".drawer").contains(document.activeElement))) {
+      e.preventDefault(); last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault(); first.focus();
+    }
+    return;
+  }
+
   const card = e.target.closest?.("[data-vehicle],[data-rank]");
   if (card && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); return card.click(); }
   if (e.key === "/" && !/^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName)) {

@@ -18,7 +18,7 @@
 | 2 | Vehicles | 85 dk | ✅ |
 | 3 | ⭐ Assign akışı | 110 dk | ✅ |
 | 4 | Overview | 70 dk | ✅ |
-| 5 | Vehicle drawer | 70 dk | ⬜ |
+| 5 | Vehicle drawer | 70 dk | ✅ |
 | 6 | Trips ve Drivers | 65 dk | ⬜ |
 | 7 | Koridor haritası ve canlı simülasyon | 80 dk | 🟡 |
 | 8 | Rehberli tur | 50 dk | ⬜ |
