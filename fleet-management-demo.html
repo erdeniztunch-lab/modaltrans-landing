@@ -375,7 +375,8 @@ a:hover { color: var(--accent-hover); text-decoration: underline; }
    TOOLTIP — opens on hover and on keyboard focus, 400ms delay
    ========================================================================= */
 .tip { position: relative; border-bottom: 1px dotted currentColor; cursor: help; }
-.tip::after {
+.has-tip { position: relative; cursor: help; }
+.tip::after, .has-tip::after {
   content: attr(data-tip);
   position: absolute; bottom: calc(100% + 6px); left: 50%; translate: -50% 0;
   width: max-content; max-width: 240px; padding: 6px 8px;
@@ -388,7 +389,8 @@ a:hover { color: var(--accent-hover); text-decoration: underline; }
   opacity: 0; visibility: hidden;
   transition: opacity var(--dur-move) var(--ease) 400ms, visibility 0s 400ms;
 }
-.tip:hover::after, .tip:focus-visible::after { opacity: 1; visibility: visible; transition-delay: 400ms, 0s; }
+.tip:hover::after, .tip:focus-visible::after,
+.has-tip:hover::after, .has-tip:focus-visible::after { opacity: 1; visibility: visible; transition-delay: 400ms, 0s; }
 
 /* ============================================================================
    CARD / TILE
@@ -904,6 +906,56 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
   .kv__k { width: auto; }
 }
 
+
+/* ============================================================================
+   TRIPS & DRIVERS
+   ========================================================================= */
+.triprow2 {
+  display: block; width: 100%; text-align: left;
+  padding: var(--sp-5) var(--sp-6);
+  border: 0; border-bottom: 1px solid var(--border);
+  background: var(--surface); color: inherit; font: inherit;
+}
+.triprow2[role="button"] { cursor: pointer; }
+.triprow2[role="button"]:hover { background: var(--surface-2); }
+.triprow2:last-child { border-bottom: 0; }
+.triprow2__top { display: flex; align-items: center; gap: var(--sp-4); flex-wrap: wrap; }
+.triprow2__delay {
+  display: inline-flex; align-items: center; gap: var(--sp-3);
+  margin-top: var(--sp-4); padding: 5px 8px; border-radius: var(--r-chip);
+  background: var(--warn-bg); color: var(--warn-fg); border: 1px solid var(--warn-br);
+  font-size: var(--fs-xs); font-weight: var(--w-label);
+}
+
+/* Declarations: fixed order, fixed width, so a status change never shifts the row */
+.decls { display: flex; flex-wrap: wrap; gap: var(--sp-4); margin-top: var(--sp-5); }
+.decls .chip { min-width: 8.5rem; justify-content: flex-start; gap: 4px; }
+.decls .chip b { font-weight: var(--w-strong); }
+
+.chain--compact { padding: var(--sp-5) 0 0; }
+.chain--compact .chain__node { width: 24px; height: 24px; }
+.chain--compact .chain__line { top: 12px; }
+.chain--compact .chain__name { margin-top: var(--sp-2); font-size: var(--fs-micro); }
+
+/* Acronyms explained once, rather than 76 tooltips down the page */
+.glossary { border-bottom: 1px solid var(--border); }
+.glossary > summary {
+  padding: 10px var(--sp-6); cursor: pointer;
+  font-size: var(--fs-xs); color: var(--text-muted);
+}
+.glossary > summary:hover { color: var(--text); }
+.glossary__body { padding: 0 var(--sp-6) var(--sp-5); }
+
+/* AETR hours: 9 hours is the day, the marker sits at the one-hour warning */
+.hoursbar { position: relative; height: 8px; border-radius: var(--r-pill); background: var(--surface-3); overflow: hidden; }
+.hoursbar span { display: block; height: 100%; }
+.hoursbar::after {
+  content: ""; position: absolute; top: 0; bottom: 0; left: 11.1%;
+  width: 1px; background: var(--bad-fg); opacity: .55;
+}
+table.data tbody tr.is-idle { cursor: default; }
+table.data tbody tr.is-idle:hover { background: transparent; }
+
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
@@ -1252,20 +1304,25 @@ const TRIPS = [
    vehicle visibly unblocks GVMS instead of leaving a stale picture. */
 function chainFor(trip) {
   const d = trip.declarations || {};
-  const ncts = d.ncts === "filed" ? ["done", "Accepted", ""]
+  const reached = trip.status === "completed" ? 6 : (trip.progress ?? 2);
+  const at = i => i < reached ? "done" : i === reached ? "current" : "pending";
+  const ncts = (d.ncts === "filed" || d.ncts === "accepted") ? ["done", "Accepted", ""]
              : d.ncts === "draft" ? ["pending", "Drafted, waiting", ""]
              : ["pending", "Not required", ""];
   const gvms = d.gvms === "missing" ? ["blocked", "No reference yet", "bad"]
              : d.gvms === "draft" ? ["pending", "Reference drafted", ""]
-             : d.gvms === "filed" ? ["done", "Cleared", ""]
+             : (d.gvms === "filed" || d.gvms === "accepted") ? ["done", "Cleared", ""]
              : ["pending", "Not required", ""];
+  const done = trip.status === "completed";
   return [
-    ["Loading",    "done",    "file",         "28.08 · 09:40",     ""],
-    ["TR Customs", "done",    "check-circle", "28.08 · 16:05",     ""],
-    ["Ro-Ro",      "current", "truck",        "Trieste, boarding", "accent"],
-    ["NCTS",       ncts[0],   "file",         ncts[1],             ncts[2]],
-    ["GVMS",       gvms[0],   "alert",        gvms[1],             gvms[2]],
-    ["Delivery",   "pending", "check",        "ETA " + trip.eta,   ""],
+    ["Loading",    at(0), "file",         done ? "Loaded" : "28.08 · 09:40",     ""],
+    ["TR Customs", at(1), "check-circle", done ? "Cleared" : "28.08 · 16:05",    ""],
+    ["Ro-Ro",      at(2), "truck",        at(2) === "current" ? "Boarding" : "Crossed", at(2) === "current" ? "accent" : ""],
+    ["NCTS",       d.ncts === "missing" ? "blocked"
+                   : (d.ncts === "not_required" || ncts[0] === "done") ? at(3) : ncts[0], "file", ncts[1], ncts[2]],
+    ["GVMS",       d.gvms === "missing" ? "blocked"
+                   : (d.gvms === "not_required" || gvms[0] === "done") ? at(4) : gvms[0], "alert", gvms[1], gvms[2]],
+    ["Delivery",   at(5), "check",        done ? "Delivered " + trip.eta : "ETA " + trip.eta, ""],
   ];
 }
 
@@ -1279,6 +1336,112 @@ function blockersFor(trip) {
   return n;
 }
 
+
+/* ============================================================================
+   TRIP HISTORY & DRIVER PAPERWORK
+   Six trips is not a trip screen. History and late runs are generated after
+   vehicles and drivers exist, so every trip points at a real truck.
+   ========================================================================= */
+const ROUTE_POOL = [
+  ["İzmir", "Duisburg", "TR → DE", 2620], ["Kocaeli", "Lyon", "TR → FR", 2840],
+  ["Adana", "München", "TR → DE", 2380], ["Tekirdağ", "Antwerp", "TR → NL", 2680],
+  ["Ambarlı", "Rotterdam", "TR → NL", 2740], ["Mersin", "Trieste", "TR → IT", 2180],
+  ["Gebze", "Sofia", "TR → RO", 860], ["Bursa", "Calais", "TR → FR", 2960],
+  ["İstanbul", "Manchester", "TR → UK", 3480], ["Gebze", "Birmingham", "TR → UK", 3260],
+];
+const DELAYS = [
+  "Waiting for a GVMS reference",
+  "Ferry rescheduled at Trieste — 14h later",
+  "Queue at Kapıkule, moving at 6h",
+];
+
+/** What each corridor legally needs, at a given stage of the run. */
+function declarationsFor(corridor, done) {
+  const uk = corridor === "TR → UK";
+  const abroad = corridor !== "TR → TR";
+  return {
+    uetds: "filed",                                            // always, before departure
+    ncts: abroad ? (done ? "accepted" : "filed") : "not_required",
+    ens: uk ? (done ? "accepted" : "filed") : "not_required",
+    gvms: uk ? (done ? "accepted" : "filed") : "not_required",
+  };
+}
+
+function buildTrips(vehicles, drivers) {
+  const list = TRIPS.map(t => ({ ...t, progress: t.status === "active" ? 2 : 0, delayed: false, delayReason: null }));
+  const driverOf = id => (drivers.find(d => d.vehicleId === id) || {}).id || null;
+  list.forEach(t => { if (t.vehicleId) t.driverId = driverOf(t.vehicleId); });
+
+  const onTrip = vehicles.filter(v => v.status === "on_trip");
+  let n = 4600;
+
+  /* three runs that are late, each for a reason a dispatcher would recognise */
+  DELAYS.forEach((reason, i) => {
+    const v = onTrip[i + 1];
+    const [from, to, corridor, km] = ROUTE_POOL[i];
+    list.push({
+      ref: "TR-" + (n += 7), status: "active", delayed: true, delayReason: reason,
+      vehicleId: v.id, driverId: driverOf(v.id),
+      origin: from, destination: to, corridor, distanceKm: km,
+      legMin: 240 + Math.floor(rnd() * 200), adr: false,
+      body: ["reefer", "tautliner", "mega"][i], weightT: 18 + Math.floor(rnd() * 8),
+      pickup: dateIn(-(3 + i)).slice(0, 6), eta: dateIn(1 + i).slice(0, 6),
+      progress: 2 + (i % 3),
+      declarations: i === 0
+        ? { ...declarationsFor(corridor, false), gvms: "missing" }
+        : declarationsFor(corridor, false),
+      cost: null, co2eKg: null,
+    });
+  });
+
+  /* ten completed runs — the history the Completed tab lives on */
+  for (let i = 0; i < 10; i++) {
+    const v = onTrip[(i + 5) % onTrip.length];
+    const [from, to, corridor, km] = ROUTE_POOL[i % ROUTE_POOL.length];
+    const weightT = 16 + Math.floor(rnd() * 10);
+    list.push({
+      ref: "TR-" + (n += 7), status: "completed", delayed: false, delayReason: null,
+      vehicleId: v.id, driverId: driverOf(v.id),
+      origin: from, destination: to, corridor, distanceKm: km,
+      legMin: 240 + Math.floor(rnd() * 200), adr: rnd() < 0.2,
+      body: ["reefer", "tautliner", "mega", "box"][i % 4], weightT,
+      pickup: dateIn(-(20 + i * 3)).slice(0, 6), eta: dateIn(-(12 + i * 3)).slice(0, 6),
+      progress: 6,
+      declarations: declarationsFor(corridor, true),
+      cost: (() => {
+        const fuel = Math.round(km * v.costPerKm * 0.62);
+        const tolls = Math.round(km * v.costPerKm * 0.14);
+        const ferry = corridor === "TR → UK" ? 890 : 0;
+        const perDiem = Math.max(1, Math.round(km / 700)) * 65;
+        return { fuel, tolls, ferry, perDiem, total: fuel + tolls + ferry + perDiem, currency: "EUR" };
+      })(),
+      co2eKg: Math.round(km * weightT * 0.087),
+    });
+  }
+  return list;
+}
+
+/* --- Driver paperwork ---------------------------------------------------- */
+const UK_NAMES = ["James", "Liam", "Owen", "Craig"];
+function enrichDrivers(list) {
+  list.forEach(d => {
+    const uk = UK_NAMES.some(n => d.name.startsWith(n));
+    d.nationality = uk ? "UK" : "TR";
+    const paper = (type, days) => ({ type, days, validUntil: dateIn(days) });
+    d.licences = uk
+      ? [paper("Driver CPC", 120 + Math.floor(rnd() * 900)), paper("ADR", d.adr ? 200 + Math.floor(rnd() * 700) : -1)]
+      : [paper("SRC", 150 + Math.floor(rnd() * 800)),
+         paper("Passport", 90 + Math.floor(rnd() * 1200)),
+         paper("ADR", d.adr ? 200 + Math.floor(rnd() * 700) : -1)];
+    d.licences = d.licences.filter(l => l.days > 0);
+  });
+  /* two cards are overdue for download — the 28-day rule has teeth */
+  const onDuty = list.filter(d => d.vehicleId);
+  onDuty[3].tachoDaysAgo = 34;
+  onDuty[4].tachoDaysAgo = 26;
+  return list;
+}
+
 /* ============================================================================
    STORE — one source of truth. Every write goes through commit(), so undo
    is a property of the store rather than something each action reimplements.
@@ -1290,13 +1453,14 @@ const Store = {
 
   init() {
     const vehicles = enrichVehicles(buildVehicles());
+    const drivers = enrichDrivers(buildDrivers(vehicles));
     this.state = {
       vehicles,
-      drivers: buildDrivers(vehicles),
-      trips: TRIPS.map(t => ({ ...t })),
+      drivers,
+      trips: buildTrips(vehicles, drivers),
       ui: { scope: "own", tab: "all", q: "", corridor: null, docFilter: null, selected: null, page: 0,
             assign: { tripRef: null, vehicleId: null, driverId: null, showAll: false, done: null },
-            drawer: { vehicleId: null, tab: "overview", returnTo: null } },
+            drawer: { vehicleId: null, tab: "overview", returnTo: null }, tripTab: "active" },
     };
     return this;
   },
@@ -1428,6 +1592,7 @@ const S = {
     { key: "overdue",  sem: "bad",  icon: "tools",  title: "Maintenance overdue",            sub: "Past the service window",       count: S.maintOverdue() },
     { key: "expiring", sem: "warn", icon: "clock",  title: "Documents expiring in 30 days",  sub: "7 of them block a UK leg",      count: S.docsExpiring() },
     { key: "unassigned", sem: "info", icon: "truck",  title: "Trips unassigned",             sub: "Pickup within 48 hours",        count: S.unassignedTrips().length },
+    { key: "late",     sem: "warn", icon: "clock",  title: "Trips running late",             sub: "Each one has a reason attached", count: S.delayedTrips().length },
     { key: "aetr",     sem: "info", icon: "person", title: "Drivers near the AETR limit",    sub: "Less than 1h of driving left",  count: S.driversNearLimit() },
   ],
 
@@ -1466,6 +1631,7 @@ const S = {
   driverFor: v => S.drivers().find(d => d.vehicleId === v.id) || null,
   freeDrivers: () => S.drivers().filter(d => !d.vehicleId),
   driversNearLimit: () => S.drivers().filter(d => d.vehicleId && d.minutesLeft < 60).length,
+  delayedTrips: () => S.trips().filter(t => t.status === "active" && t.delayed),
 
   /** Exactly the rows the Documents rail item opens onto — badge and table agree. */
   docsNeedingWork: (scope = "own") => S.all().filter(v =>
@@ -1937,10 +2103,174 @@ const soon = (title, text) => `
     <p class="empty__title">${title}</p><p class="empty__text">${text}</p>
   </div></div>`;
 
-views.trips = () => soon("Trips lands in Phase 6",
-  "Every trip as a six-leg chain: loading, TR customs, ferry, EU transit, UK border, delivery.");
-views.drivers = () => soon("Drivers lands in Phase 6",
-  "Driving hours, licences and tachograph download status for the whole roster.");
+/* ============================================================================
+   VIEW · TRIPS
+   ========================================================================= */
+const DECL_ORDER = ["uetds", "ncts", "ens", "gvms"];
+const DECL_META = {
+  uetds: { label: "U-ETDS", tip: "Türkiye's mandatory pre-departure trip declaration. Filed before the truck leaves the loading site." },
+  ncts:  { label: "NCTS",   tip: "EU transit declaration (T1). Opens the transit and closes it at the destination office." },
+  ens:   { label: "ENS",    tip: "Entry summary declaration. Safety and security data, lodged before arrival." },
+  gvms:  { label: "GVMS",   tip: "UK goods vehicle movement reference. The truck cannot board without it." },
+};
+const DECL_STATE = {
+  accepted:     { sem: "ok",    icon: "check-circle", text: "Accepted" },
+  filed:        { sem: "ok",    icon: "check",        text: "Filed" },
+  draft:        { sem: "warn",  icon: "clock",        text: "Draft" },
+  missing:      { sem: "bad",   icon: "alert",        text: "Missing" },
+  not_required: { sem: "quiet", icon: "dash",         text: "Not required" },
+};
+
+const declChips = trip => `<div class="decls">${DECL_ORDER.map(k => {
+  const st = DECL_STATE[(trip.declarations || {})[k] || "not_required"];
+  return `<span class="chip chip--${st.sem} has-tip" data-tip="${DECL_META[k].tip}">
+    ${ico(st.icon, "ico ico--sm")}<b>${DECL_META[k].label}</b> ${st.text}</span>`;
+}).join("")}</div>`;
+
+const compactChain = trip => `<div class="chain chain--compact">${
+  chainFor(trip).map(([name, state, icn], i) => `
+    <div class="chain__step">
+      <span class="chain__line" style="${i === 0 ? "left:50%;right:0" : i === 5 ? "left:0;right:50%" : "left:0;right:0"};
+        background:${state === "done" || state === "current" ? "var(--ok-fg)" : "var(--border-strong)"}"></span>
+      <span class="chain__node chain__node--${state}">${ico(icn, "ico ico--sm")}</span>
+      <span class="chain__name">${name}</span>
+    </div>`).join("")}</div>`;
+
+const TRIP_TABS = [
+  ["active", "Active"], ["unassigned", "Unassigned"], ["delayed", "Delayed"], ["completed", "Completed"],
+];
+const tripBucket = t => t.status === "unassigned" ? "unassigned"
+  : t.status === "completed" ? "completed"
+  : t.delayed ? "delayed" : "active";
+
+views.trips = () => {
+  const u = Store.state.ui;
+  const tab = u.tripTab || "active";
+  const all = S.trips();
+  const rows = all.filter(t => tripBucket(t) === tab);
+  const count = k => all.filter(t => tripBucket(t) === k).length;
+
+  const body = rows.length ? rows.map(t => {
+    const v = t.vehicleId ? S.all().find(x => x.id === t.vehicleId) : null;
+    const d = t.driverId ? S.drivers().find(x => x.id === t.driverId) : null;
+    const blockers = t.status === "active" ? blockersFor(t) : 0;
+    return `
+    <div class="triprow2" ${v ? `role="button" tabindex="0" data-triprow="${v.id}"` : ""}>
+      <div class="triprow2__top">
+        <span class="identifier" style="color:var(--text)">${esc(t.ref)}</span>
+        <span class="u-sm u-dim">${esc(t.origin)} → ${esc(t.destination)}</span>
+        <span class="chip chip--outline">${esc(t.corridor)}</span>
+        <span class="u-grow"></span>
+        <span class="u-xs u-muted">${v ? esc(v.plate) : "No vehicle yet"}${d ? " · " + esc(d.name) : ""}</span>
+        <span class="u-xs u-muted tnum">${t.status === "completed" ? "Delivered " : "ETA "}${t.eta}</span>
+        ${blockers ? `<span class="chip chip--bad">${ico("alert", "ico ico--sm")}${blockers} blocker${blockers === 1 ? "" : "s"}</span>` : ""}
+      </div>
+      ${t.delayed ? `<div class="triprow2__delay">${ico("clock", "ico ico--sm")}${esc(t.delayReason)}</div>` : ""}
+      ${t.status === "unassigned"
+        ? `<div class="u-xs u-muted" style="margin-top:var(--sp-4)">Pickup ${t.pickup} · ${t.weightT}t ${esc(t.body)}${t.adr ? " · ADR class 3" : ""} — no truck assigned yet</div>`
+        : compactChain(t)}
+      ${t.status === "unassigned" ? "" : declChips(t)}
+    </div>`;
+  }).join("")
+  : `<div class="empty">
+      <span class="empty__ico">${ico("route", "ico ico--lg")}</span>
+      <p class="empty__title">No ${tab} trips</p>
+      <p class="empty__text">${tab === "delayed"
+        ? "Nothing is running late right now. Delays show up here with the reason attached."
+        : tab === "unassigned"
+          ? "Every road leg has a truck. New bookings from Freight land here."
+          : "Nothing in this bucket yet."}</p>
+    </div>`;
+
+  return `
+  <div class="u-col" style="gap:var(--sp-5)">
+    <div class="u-row" style="justify-content:space-between;flex-wrap:wrap;gap:var(--sp-4)">
+      <div class="u-sm u-muted">${all.length} trips · ${count("delayed")} running late · updated 09:12</div>
+      ${S.unassignedTrips().length ? `<a class="btn btn--primary btn--sm" href="#/assign">Assign a leg</a>` : ""}
+    </div>
+
+    <div class="panel">
+      <div class="toolbar">
+        <div class="tabs" role="tablist" aria-label="Trip status">
+          ${TRIP_TABS.map(([k, label]) => `
+            <button role="tab" type="button" data-triptab="${k}" aria-selected="${tab === k}">
+              ${label} <span class="u-muted tnum">${count(k)}</span></button>`).join("")}
+        </div>
+      </div>
+      <details class="glossary">
+        <summary>What do U-ETDS, NCTS, ENS and GVMS mean?</summary>
+        <div class="glossary__body">
+          ${DECL_ORDER.map(k => `<div class="kv"><span class="kv__k">${DECL_META[k].label}</span>
+            <span class="kv__v">${DECL_META[k].tip}</span></div>`).join("")}
+        </div>
+      </details>
+      ${body}
+    </div>
+  </div>`;
+};
+
+/* ============================================================================
+   VIEW · DRIVERS
+   ========================================================================= */
+const hoursSem = m => m < 60 ? "bad" : m < 120 ? "warn" : "ok";
+const tachoSem = d => d > 28 ? "bad" : d >= 21 ? "warn" : "ok";
+
+views.drivers = () => {
+  const drivers = S.drivers();
+  const onDuty = drivers.filter(d => d.vehicleId);
+  const bench = drivers.filter(d => !d.vehicleId);
+
+  const row = d => {
+    const v = d.vehicleId ? S.all().find(x => x.id === d.vehicleId) : null;
+    const pct = Math.min(100, Math.round(d.minutesLeft / 540 * 100));
+    return `
+    <tr ${v ? `data-driverrow="${v.id}" tabindex="0"` : 'class="is-idle"'}>
+      <td><span class="cell-2"><b>${esc(d.name)}</b><span>${d.nationality}</span></span></td>
+      <td>${d.licences.map(l => `<span class="chip ${l.days <= 60 ? "chip--warn" : "chip--outline"}">${esc(l.type)}</span>`).join(" ")}</td>
+      <td style="min-width:150px">
+        <div class="hoursbar"><span style="width:${pct}%;background:var(--${hoursSem(d.minutesLeft)}-fg)"></span></div>
+        <span class="u-micro u-muted tnum">${hm(d.minutesLeft)} of 9h left</span>
+      </td>
+      <td>${v ? chip(T_STATUS[v.status]) : `<span class="chip chip--quiet">${ico("dash", "ico ico--sm")}On the bench</span>`}</td>
+      <td>${v ? `<span class="identifier">${esc(v.plate)}</span>` : "—"}</td>
+      <td>
+        <span class="chip chip--${tachoSem(d.tachoDaysAgo)} has-tip"
+              data-tip="Driver cards must be downloaded at least every 28 days and kept for a year.">
+          ${ico(tachoSem(d.tachoDaysAgo) === "ok" ? "check-circle" : "clock", "ico ico--sm")}${d.tachoDaysAgo}d ago</span>
+      </td>
+    </tr>`;
+  };
+
+  const table = list => `
+    <div class="tablewrap">
+      <table class="data" role="grid">
+        <thead><tr>
+          <th>Driver</th><th>Licences</th><th>Hours remaining</th>
+          <th>Status</th><th>Vehicle</th><th>Tacho download</th>
+        </tr></thead>
+        <tbody>${list.map(row).join("")}</tbody>
+      </table>
+    </div>`;
+
+  return `
+  <div class="u-col" style="gap:var(--sp-5)">
+    <div class="u-sm u-muted">${drivers.length} drivers · ${S.driversNearLimit()} near the AETR limit ·
+      ${drivers.filter(d => d.tachoDaysAgo > 28).length} tacho download overdue</div>
+
+    <div class="panel">
+      <div class="toolbar"><div><div class="card__title">On duty</div>
+        <div class="card__hint">${onDuty.length} drivers with a truck · 9h is the daily AETR driving limit</div></div></div>
+      ${table(onDuty)}
+    </div>
+
+    <div class="panel">
+      <div class="toolbar"><div><div class="card__title">On the bench</div>
+        <div class="card__hint">${bench.length} rested drivers — the pool the assign flow offers when hours run out</div></div></div>
+      ${table(bench)}
+    </div>
+  </div>`;
+};
+
 /* Documents and Maintenance are the vehicle table under a preset filter,
    not separate screens — the design lists them in the rail, the data is the same. */
 const PRESETS = {
@@ -2333,6 +2663,15 @@ document.addEventListener("click", e => {
   const scope = hit("[data-scope]");
   if (scope) return Store.ui({ scope: scope.dataset.scope, page: 0, selected: null });
 
+  const tTab = hit("[data-triptab]");
+  if (tTab) return Store.ui({ tripTab: tTab.dataset.triptab });
+
+  const tRow = hit("[data-triprow]");
+  if (tRow) return openDrawer(tRow.dataset.triprow, `[data-triprow="${tRow.dataset.triprow}"]`);
+
+  const dRow = hit("[data-driverrow]");
+  if (dRow) return openDrawer(dRow.dataset.driverrow, `[data-driverrow="${dRow.dataset.driverrow}"]`);
+
   const tab = hit("[data-tab]");
   if (tab) return Store.ui({ tab: tab.dataset.tab, page: 0 });
 
@@ -2374,6 +2713,7 @@ document.addEventListener("click", e => {
   if (attn) {
     const k = attn.dataset.attn;
     if (k === "unassigned") { location.hash = "#/assign"; return; }
+    if (k === "late") { Store.state.ui.tripTab = "delayed"; location.hash = "#/trips"; return; }
     const map = { expired: { tab: "attention", docFilter: null }, overdue: { tab: "attention" }, expiring: { tab: "all", docFilter: "expiring" } };
     Object.assign(Store.state.ui, { scope: "own", q: "", corridor: null, docFilter: null }, map[k] || { tab: "attention" });
     location.hash = "#/vehicles";
@@ -2446,7 +2786,7 @@ document.addEventListener("keydown", e => {
     return;
   }
 
-  const card = e.target.closest?.("[data-vehicle],[data-rank]");
+  const card = e.target.closest?.("[data-vehicle],[data-rank],[data-triprow],[data-driverrow]");
   if (card && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); return card.click(); }
   if (e.key === "/" && !/^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName)) {
     const box = document.querySelector('[data-role="search"]');
