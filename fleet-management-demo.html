@@ -759,6 +759,81 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
   .hero__stats { padding-left: 0; border-left: 0; }
 }
 
+
+/* ============================================================================
+   ASSIGN FLOW — left list keeps the choice, right side refreshes,
+   action bar stays put at the bottom.
+   ========================================================================= */
+.split { display: grid; grid-template-columns: 340px 1fr; gap: var(--sp-5); align-items: start; }
+@media (max-width: 1080px) { .split { grid-template-columns: 1fr; } }
+
+.triplist { max-height: calc(100dvh - 210px); overflow-y: auto; }
+.triprow {
+  display: block; width: 100%; text-align: left; cursor: pointer;
+  padding: var(--row-py) var(--row-px);
+  border: 0; border-bottom: 1px solid var(--border);
+  background: var(--surface); color: inherit; font: inherit;
+}
+.triprow:hover { background: var(--surface-2); }
+.triprow[aria-selected="true"] { background: var(--accent-soft); box-shadow: inset 2px 0 0 var(--accent); }
+.triprow:last-child { border-bottom: 0; }
+.triprow__top { display: flex; align-items: center; gap: var(--sp-4); }
+.triprow__ref { font-size: var(--fs-sm); font-weight: var(--w-strong); letter-spacing: .02em; color: var(--text); }
+.triprow__meta { margin-top: 2px; font-size: var(--fs-xs); color: var(--text-muted); }
+
+/* --- Trip header --------------------------------------------------------- */
+.triphead { display: flex; align-items: flex-start; gap: var(--sp-6); flex-wrap: wrap; padding: var(--card-pad); }
+.tripfact { display: flex; flex-direction: column; gap: 1px; }
+.tripfact b { font-size: var(--fs-sm); font-weight: var(--w-strong); font-variant-numeric: tabular-nums; }
+.tripfact span { font-size: var(--fs-micro); color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; }
+
+/* --- Ranked vehicle card ------------------------------------------------- */
+.rankcard {
+  display: block; width: 100%; text-align: left; cursor: pointer;
+  padding: var(--sp-5) var(--sp-6);
+  border: 0; border-bottom: 1px solid var(--border);
+  background: var(--surface); color: inherit; font: inherit;
+}
+.rankcard:hover { background: var(--surface-2); }
+.rankcard[aria-selected="true"] { background: var(--accent-soft); box-shadow: inset 2px 0 0 var(--accent); }
+.rankcard--blocked { opacity: .58; }
+.rankcard--blocked:hover { opacity: .8; }
+.rankcard__top { display: flex; align-items: baseline; gap: var(--sp-4); }
+.rankcard__score { margin-left: auto; font-size: var(--fs-xl); font-weight: var(--w-strong); font-variant-numeric: tabular-nums; line-height: 1; }
+.rankcard__max { font-size: var(--fs-xs); font-weight: var(--w-body); color: var(--text-muted); }
+.rankcard__sub { margin-top: 2px; font-size: var(--fs-xs); color: var(--text-muted); }
+.rankcard__why { margin-top: var(--sp-3); font-size: var(--fs-sm); color: var(--text-2); }
+
+/* --- Compliance rows — the safety net, spelled out ----------------------- */
+.checks { margin-top: var(--sp-5); padding-top: var(--sp-5); border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: var(--sp-5); }
+.check-row { display: flex; gap: var(--sp-4); align-items: flex-start; }
+.check-row__ico { display: grid; place-items: center; width: 20px; height: 20px; flex: none; border-radius: var(--r-chip); }
+.check-row__ico--ok   { color: var(--ok-fg);   background: var(--ok-bg); }
+.check-row__ico--warn { color: var(--warn-fg); background: var(--warn-bg); }
+.check-row__ico--bad  { color: var(--bad-fg);  background: var(--bad-bg); }
+.check-row__name { width: 128px; flex: none; font-size: var(--fs-sm); font-weight: var(--w-label); }
+.check-row__why { font-size: var(--fs-sm); color: var(--text-2); }
+.check-row__fix { margin-top: var(--sp-4); display: flex; align-items: center; gap: var(--sp-4); flex-wrap: wrap; }
+@media (max-width: 640px) { .check-row__name { width: auto; } .check-row { flex-wrap: wrap; } }
+
+/* --- Sticky action bar --------------------------------------------------- */
+.actionbar {
+  position: sticky; bottom: 0; z-index: 2;
+  display: flex; align-items: center; gap: var(--sp-5); flex-wrap: wrap;
+  padding: var(--sp-5) var(--sp-6);
+  background: var(--surface); border-top: 1px solid var(--border);
+}
+
+/* --- Result: the ripple, one line each ----------------------------------- */
+.result__row { display: flex; gap: var(--sp-5); align-items: baseline; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.result__row:last-child { border-bottom: 0; }
+.result__where {
+  width: 116px; flex: none;
+  font-size: var(--fs-micro); font-weight: var(--w-label);
+  letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted);
+}
+.result__what { font-size: var(--fs-sm); }
+
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
@@ -945,7 +1020,7 @@ function buildVehicles() {
           : { state: ds },
       km: 60000 + Math.floor(rnd() * 840000),
       corridor: pick(CORRIDORS),
-      adr: rnd() < 0.4,
+      adr: rnd() < 0.55,
       costPerKm: +(1.28 + rnd() * 0.28).toFixed(2),
     });
   }
@@ -964,7 +1039,11 @@ function buildDrivers(vehicles) {
     if (!v.driver) return;
     list.push({
       id: "d" + list.length, name: v.driver, vehicleId: v.id,
-      minutesLeft: 120 + Math.floor(rnd() * 420),
+      /* A driver waiting with a free truck is rested; one already rolling
+         has burned part of the 9-hour AETR day. */
+      minutesLeft: v.status === "available" ? 430 + Math.floor(rnd() * 110)
+                 : v.status === "on_trip"   ?  90 + Math.floor(rnd() * 320)
+                 :                            200 + Math.floor(rnd() * 300),
       adr: v.adr, cpcValid: true,
       tachoDaysAgo: 2 + Math.floor(rnd() * 30),
     });
@@ -977,10 +1056,16 @@ function buildDrivers(vehicles) {
       adr: true, cpcValid: true, tachoDaysAgo: 3 + Math.floor(rnd() * 10),
     });
   });
-  /* Exactly two near the limit — the attention list counts these */
-  const onDuty = list.filter(d => d.vehicleId);
-  onDuty[0].minutesLeft = 45;
-  onDuty[1].minutesLeft = 52;
+  /* Exactly two near the limit. They sit on AVAILABLE trucks on purpose:
+     a driver-hours block only teaches anything on a truck you could
+     otherwise have taken. */
+  const freeTrucks = list.filter(d => {
+    const v = vehicles.find(x => x.id === d.vehicleId);
+    return v && v.status === "available";
+  });
+  const targets = freeTrucks.length >= 2 ? freeTrucks : list.filter(d => d.vehicleId);
+  targets[0].minutesLeft = 45;
+  targets[1].minutesLeft = 52;
   return list;
 }
 
@@ -1060,7 +1145,8 @@ const Store = {
       vehicles,
       drivers: buildDrivers(vehicles),
       trips: TRIPS.map(t => ({ ...t })),
-      ui: { scope: "own", tab: "all", q: "", corridor: null, docFilter: null, selected: null, page: 0 },
+      ui: { scope: "own", tab: "all", q: "", corridor: null, docFilter: null, selected: null, page: 0,
+            assign: { tripRef: null, vehicleId: null, driverId: null, showAll: false, done: null } },
     };
     return this;
   },
@@ -1239,7 +1325,7 @@ const S = {
      and a concrete fix where one exists. A single bad row blocks assignment. */
   compliance(v, d, trip) {
     const out = [];
-    const push = (level, name, why, fix = null) => out.push({ level, name, why, fix });
+    const push = (level, name, why, fix = null, act = null) => out.push({ level, name, why, fix, act });
 
     if (v.status === "available") push("ok", "Vehicle status", "Available");
     else push("bad", "Vehicle status", `${T_STATUS[v.status].label} — not free to take a trip`,
@@ -1253,15 +1339,18 @@ const S = {
 
     const tripDays = Math.max(1, Math.ceil(trip.distanceKm / 700));
     if (v.docs.state === "expired")
-      push("bad", "Documents", `Expired ${v.docs.days}d ago — the vehicle cannot legally move`, "Renew before assigning");
+      push("bad", "Documents", `Expired ${v.docs.days}d ago — the vehicle cannot legally move`,
+           "Renewal is same-day in the portal", { type: "renew", label: "Renew documents" });
     else if (v.docs.state === "expiring")
       v.docs.days > tripDays
         ? push("warn", "Documents", `Expires in ${v.docs.days}d — trip ends ${v.docs.days - tripDays}d before that`)
-        : push("bad", "Documents", `Expires in ${v.docs.days}d, mid-trip`, "Renew or pick another vehicle");
+        : push("bad", "Documents", `Expires in ${v.docs.days}d — that falls mid-trip`,
+                "Renew now or pick another vehicle", { type: "renew", label: "Renew documents" });
     else push("ok", "Documents", v.docs.state === "not_required" ? "Not required on this corridor" : "Valid");
 
     if (v.maint.state === "overdue")
-      push("bad", "Maintenance", `Overdue by ${nfmt(v.maint.km)} km`, "Schedule service first");
+      push("bad", "Maintenance", `Overdue by ${nfmt(v.maint.km)} km`,
+           "Booking a slot clears the block", { type: "service", label: "Schedule service" });
     else if (v.maint.state === "due" && v.maint.km < trip.distanceKm)
       push("warn", "Maintenance", `Due in ${nfmt(v.maint.km)} km, trip runs ${nfmt(trip.distanceKm)} km`);
     else push("ok", "Maintenance", "Inside the service window");
@@ -1270,7 +1359,8 @@ const S = {
     else if (d.minutesLeft < trip.legMin) {
       const alt = S.freeDrivers().find(x => x.minutesLeft >= trip.legMin && (!trip.adr || x.adr));
       push("bad", "Driver hours", `${hm(d.minutesLeft)} remaining, leg requires ${hm(trip.legMin)}`,
-           alt ? `Assign a co-driver, or ${alt.name} (${hm(alt.minutesLeft)} available)` : "Assign a co-driver");
+           alt ? `${alt.name} is on the bench with ${hm(alt.minutesLeft)}` : "No spare driver has enough hours",
+           alt ? { type: "swapDriver", driverId: alt.id, label: `Assign ${alt.name}` } : null);
     } else push("ok", "Driver hours", `${hm(d.minutesLeft)} remaining, leg requires ${hm(trip.legMin)}`);
 
     if (v.corridor === trip.corridor) push("ok", "Corridor", `Already runs ${trip.corridor}`);
@@ -1300,7 +1390,15 @@ const S = {
         const checks = S.compliance(v, d, trip);
         const blockers = checks.filter(c => c.level === "bad").length;
         const warnings = checks.filter(c => c.level === "warn").length;
-        let score = 100 - blockers * 34 - warnings * 9;
+        /* A truck that is simply busy is further away than one that needs a
+           co-driver, so blockers are not all worth the same. */
+        const WEIGHT = { "Vehicle status": 60, "Driver": 55, "ADR certificate": 50,
+                         "Documents": 45, "Maintenance": 40, "Driver hours": 30 };
+        let score = 100;
+        checks.forEach(c => {
+          if (c.level === "bad") score -= (WEIGHT[c.name] || 40);
+          else if (c.level === "warn") score -= 9;
+        });
         if (v.corridor === trip.corridor) score += 6;
         if (v.ownership === "own") score += 4;
         if (trip.adr && v.adr) score += 4;
@@ -1369,6 +1467,8 @@ const ROUTES = [
   { id: "drivers",     title: "Drivers",     icon: "person" },
   { id: "documents",   title: "Documents",   icon: "file",     badge: () => S.docsNeedingWork(), bad: true },
   { id: "maintenance", title: "Maintenance", icon: "tools",    badge: () => S.maintOverdue(), bad: true },
+  /* A flow, not a section — reachable from Overview and Vehicles, not the rail. */
+  { id: "assign", title: "Assign a leg", icon: "route", hidden: true },
 ];
 const views = {};
 const scrollMemory = new Map();
@@ -1379,7 +1479,7 @@ const currentRoute = () => {
 
 function renderNav() {
   const active = currentRoute().id;
-  document.getElementById("nav").innerHTML = ROUTES.map(r => {
+  document.getElementById("nav").innerHTML = ROUTES.filter(r => !r.hidden).map(r => {
     const n = r.badge?.();
     return `<a class="nav__item" href="#/${r.id}" ${r.id === active ? 'aria-current="page"' : ""}>
       ${ico(r.icon)}<span>${r.title}</span>
@@ -1650,6 +1750,17 @@ views.vehicles = () => {
         <span class="u-xs u-muted tnum">${rows.length} results</span>
       </div>
 
+      ${u.selected ? (() => {
+        const v = S.all().find(x => x.id === u.selected);
+        return v ? `<div class="bulkbar">
+          <span class="u-strong">${esc(v.plate)} selected</span>
+          <button class="btn btn--secondary btn--sm" type="button" data-assign-start="${v.id}"
+                  ${v.status === "available" ? "" : "disabled"}>Assign trip</button>
+          <button class="btn btn--secondary btn--sm" type="button" data-service="${v.id}">Schedule service</button>
+          <span class="u-grow"></span>
+          <button class="btn btn--ghost btn--sm" type="button" data-clear-selection>Clear</button>
+        </div>` : "";
+      })() : ""}
       ${body}
     </div>
   </div>`;
@@ -1676,6 +1787,171 @@ const PRESETS = {
 };
 views.documents = () => views.vehicles();
 views.maintenance = () => views.vehicles();
+
+/* ============================================================================
+   VIEW · ASSIGN — pick a road leg, pick a truck, clear the blockers, commit.
+   The whole demo turns on this screen.
+   ========================================================================= */
+const CHECK_ICON = { ok: "check-circle", warn: "clock", bad: "x-circle" };
+
+function assignState() { return Store.state.ui.assign; }
+function setAssign(patch) { Store.ui({ assign: { ...assignState(), ...patch } }); }
+
+/** What happened, in the six places it happened. */
+function assignResult(done) {
+  const trip = S.tripByRef(done.tripRef);
+  const veh = Store.state.vehicles.find(v => v.id === done.vehicleId);
+  const rows = [
+    ["Vehicle", `${esc(veh.plate)} moved from Available to <b>On trip</b>`],
+    ["Trip", `Six-leg chain created · ${esc(trip.origin)} → ${esc(trip.destination)}`],
+    ["U-ETDS", `Filed before departure — <b>required by law in Türkiye</b>`],
+    ["Finance", `€${nfmt(trip.cost.total)} estimated cost pushed to the shipment P&amp;L`],
+    ["Carbon", `${nfmt(trip.co2eKg)} kg CO₂e recorded against the shipment`],
+    ["Client portal", `Customer timeline updated — no “where is my load” email`],
+  ];
+  const chain = chainFor(trip).map(([name, state, icn, meta, tone], i) => `
+    <div class="chain__step">
+      <span class="chain__line" style="${i === 0 ? "left:50%;right:0" : i === 5 ? "left:0;right:50%" : "left:0;right:0"};
+        background:${state === "done" || state === "current" ? "var(--ok-fg)" : "var(--border-strong)"}"></span>
+      <span class="chain__node chain__node--${state}">${ico(icn, "ico ico--sm")}</span>
+      <span class="chain__name">${name}</span>
+      <span class="chain__meta${tone ? " chain__meta--" + tone : ""}">${meta}</span>
+    </div>`).join("");
+
+  return `
+  <div class="u-col" style="gap:var(--sp-5);max-width:56rem">
+    <section class="card">
+      <div class="card__head">
+        <div>
+          <div class="card__title">${esc(trip.ref)} assigned to ${esc(veh.plate)}</div>
+          <div class="card__hint">One confirmation, six records — this is what “one platform” has to mean.</div>
+        </div>
+        <span class="chip chip--ok">${ico("check-circle", "ico ico--sm")}Done</span>
+      </div>
+      <div class="card__body">
+        ${rows.map(([w, t]) => `
+          <div class="result__row"><span class="result__where">${w}</span><span class="result__what">${t}</span></div>`).join("")}
+      </div>
+      <div class="chain">${chain}</div>
+      <div class="actionbar">
+        <button class="btn btn--primary" type="button" data-assign-another>Assign another leg</button>
+        <button class="btn btn--secondary" type="button" data-assign-undo>Undo this assignment</button>
+        <span class="u-grow"></span>
+        <a class="u-sm" href="#/overview">Back to Overview</a>
+      </div>
+    </section>
+  </div>`;
+}
+
+views.assign = () => {
+  const a = assignState();
+  if (a.done) return assignResult(a.done);
+
+  const trips = S.unassignedTrips();
+  if (!trips.length) return soon("Every leg has a truck",
+    "Nothing is waiting for a vehicle right now. New road legs from Freight land here as they are booked.");
+
+  const trip = S.tripByRef(a.tripRef) || trips[0];
+  const ranked = S.rankVehiclesForLeg(trip.ref);
+  const visible = a.showAll ? ranked : ranked.slice(0, 6);
+  const rest = ranked.length - visible.length;
+
+  const sel = a.vehicleId ? ranked.find(r => r.vehicle.id === a.vehicleId) : null;
+  const driver = sel ? (a.driverId ? S.drivers().find(d => d.id === a.driverId) : sel.driver) : null;
+  const checks = sel ? S.compliance(sel.vehicle, driver, trip) : [];
+  const blockers = checks.filter(c => c.level === "bad");
+
+  /* --- left: the legs waiting ------------------------------------------- */
+  const list = trips.map(t => `
+    <button class="triprow" type="button" data-trip="${t.ref}" aria-selected="${t.ref === trip.ref}">
+      <span class="triprow__top">
+        <span class="triprow__ref">${esc(t.ref)}</span>
+        <span class="u-xs u-muted">${esc(t.corridor)}</span>
+        ${t.adr ? `<span class="chip chip--warn" style="margin-left:auto">${ico("alert", "ico ico--sm")}ADR</span>` : ""}
+      </span>
+      <span class="triprow__meta">${esc(t.origin)} → ${esc(t.destination)} · pickup ${t.pickup} · ${t.weightT}t ${esc(t.body)}</span>
+    </button>`).join("");
+
+  /* --- right: candidates, best first ------------------------------------ */
+  const cards = visible.map((r, i) => {
+    const isSel = sel && r.vehicle.id === a.vehicleId;
+    return `
+    <div class="rankcard${r.blockers ? " rankcard--blocked" : ""}" role="button" tabindex="0"
+         data-rank="${r.vehicle.id}" aria-selected="${!!isSel}">
+      <span class="rankcard__top">
+        <span class="identifier" style="color:var(--text)">${esc(r.vehicle.plate)}</span>
+        ${r.vehicle.ownership === "subcontracted" ? `<span class="chip chip--outline">${esc(r.vehicle.carrier)}</span>` : ""}
+        ${r.blockers ? `<span class="chip chip--bad">${ico("x-circle", "ico ico--sm")}${r.blockers} blocker${r.blockers === 1 ? "" : "s"}</span>` : ""}
+        <span class="rankcard__score">${r.score}<span class="rankcard__max"> /100</span></span>
+      </span>
+      <span class="rankcard__sub">${esc(r.vehicle.model)}${r.driver ? " · " + esc(r.driver.name) + " · " + hm(r.driver.minutesLeft) + " left" : " · no driver"}</span>
+      <span class="rankcard__why">${i === 0 && !r.blockers ? "" : ""}${esc(r.reason)}</span>
+      ${isSel ? `<div class="checks">${checks.map(c => `
+        <div class="check-row">
+          <span class="check-row__ico check-row__ico--${c.level}">${ico(CHECK_ICON[c.level], "ico ico--sm")}</span>
+          <span class="check-row__name">${esc(c.name)}</span>
+          <span class="u-grow">
+            <span class="check-row__why">${esc(c.why)}</span>
+            ${c.act ? `<span class="check-row__fix">
+              <button class="btn btn--secondary btn--sm" type="button"
+                      data-fix="${c.act.type}" data-fix-driver="${c.act.driverId || ""}">${esc(c.act.label)}</button>
+              <span class="u-xs u-muted">${esc(c.fix || "")}</span>
+            </span>` : ""}
+          </span>
+        </div>`).join("")}</div>` : ""}
+    </div>`;
+  }).join("");
+
+  const barMessage = !sel
+    ? "Pick a vehicle to see whether it can legally run this leg."
+    : blockers.length
+      ? `${blockers.map(b => b.name).join(" and ")} must be cleared first.`
+      : `${esc(sel.vehicle.plate)} passes every check.`;
+
+  return `
+  <div class="split">
+    <section class="panel">
+      <div class="toolbar"><div><div class="card__title">Unassigned legs</div>
+        <div class="card__hint tnum">${trips.length} waiting · pickup within 48 hours</div></div></div>
+      <div class="triplist">${list}</div>
+    </section>
+
+    <section class="panel">
+      <div class="triphead">
+        <div class="u-grow" style="min-width:12rem">
+          <div class="card__title">${esc(trip.ref)} · ${esc(trip.origin)} → ${esc(trip.destination)}</div>
+          <div class="card__hint">${esc(trip.corridor)} · pickup ${trip.pickup} · ETA ${trip.eta}</div>
+        </div>
+        <div class="tripfact"><b>${nfmt(trip.distanceKm)} km</b><span>distance</span></div>
+        <div class="tripfact"><b>${hm(trip.legMin)}</b><span>driving, next leg</span></div>
+        <div class="tripfact"><b>${trip.weightT}t</b><span>${esc(trip.body)}</span></div>
+        ${trip.adr ? `<div class="tripfact"><b><span class="tip" data-tip="Dangerous goods. The vehicle and the driver both need a valid ADR certificate.">ADR class 3</span></b><span>restriction</span></div>` : ""}
+      </div>
+
+      <div class="filters" style="border-top:1px solid var(--border)">
+        <span class="u-sm u-strong">Best vehicle for this leg</span>
+        <span class="u-xs u-muted">ranked by suitability, not alphabetically</span>
+        <span class="u-grow"></span>
+        <span class="u-xs u-muted tnum">${ranked.length} in the fleet</span>
+      </div>
+
+      ${cards}
+      ${rest > 0 ? `<button class="btn btn--ghost" type="button" data-assign-more
+          style="width:100%;justify-content:center;border-radius:0;border-bottom:1px solid var(--border)">
+          Show ${rest} more — all have blockers</button>` : ""}
+
+      <div class="actionbar">
+        <span class="u-sm ${blockers.length ? "u-dim" : "u-muted"}">${barMessage}</span>
+        <span class="u-grow"></span>
+        ${sel ? `<button class="btn btn--ghost" type="button" data-assign-cancel>Clear selection</button>` : ""}
+        <button class="btn btn--primary" type="button" data-assign-confirm
+                ${!sel || blockers.length ? "disabled" : ""}>
+          ${sel ? `Assign ${esc(sel.vehicle.plate)}` : "Assign vehicle"}
+        </button>
+      </div>
+    </section>
+  </div>`;
+};
 
 /* ============================================================================
    EVENTS — one delegated listener for the whole app
@@ -1709,6 +1985,16 @@ document.addEventListener("click", e => {
     return Store.ui({ docFilter: Store.state.ui.docFilter ? null : "expiring" });
   }
 
+  const startAssign = hit("[data-assign-start]");
+  if (startAssign) {
+    Object.assign(Store.state.ui.assign, { vehicleId: startAssign.dataset.assignStart, driverId: null, done: null });
+    location.hash = "#/assign";
+    return;
+  }
+  const svc = hit("[data-service]");
+  if (svc) { A.scheduleMaintenance(svc.dataset.service); return toast("Service booked for 15 Sep.", { action: "Undo", onAction: () => { A.undo(); toast("Booking undone."); } }); }
+  if (hit("[data-clear-selection]")) return Store.ui({ selected: null });
+
   const row = hit("[data-vehicle]");
   if (row) {
     const id = row.dataset.vehicle;
@@ -1718,9 +2004,45 @@ document.addEventListener("click", e => {
   const attn = hit("[data-attn]");
   if (attn) {
     const k = attn.dataset.attn;
+    if (k === "unassigned") { location.hash = "#/assign"; return; }
     const map = { expired: { tab: "attention", docFilter: null }, overdue: { tab: "attention" }, expiring: { tab: "all", docFilter: "expiring" } };
     Object.assign(Store.state.ui, { scope: "own", q: "", corridor: null, docFilter: null }, map[k] || { tab: "attention" });
     location.hash = "#/vehicles";
+    return;
+  }
+
+  /* --- assign flow ---------------------------------------------------- */
+  const fixBtn = hit("[data-fix]");
+  if (fixBtn) {
+    const a = assignState();
+    const kind = fixBtn.dataset.fix;
+    if (kind === "swapDriver") return setAssign({ driverId: fixBtn.dataset.fixDriver });
+    if (kind === "renew") { A.renewDocument(a.vehicleId); return toast("Documents renewed."); }
+    if (kind === "service") { A.scheduleMaintenance(a.vehicleId); return toast("Service booked for 15 Sep."); }
+    return;
+  }
+
+  const tripBtn = hit("[data-trip]");
+  if (tripBtn) return setAssign({ tripRef: tripBtn.dataset.trip, vehicleId: null, driverId: null, showAll: false });
+
+  const rankBtn = hit("[data-rank]");
+  if (rankBtn) return setAssign({ vehicleId: rankBtn.dataset.rank, driverId: null });
+
+  if (hit("[data-assign-more]")) return setAssign({ showAll: true });
+  if (hit("[data-assign-cancel]")) return setAssign({ vehicleId: null, driverId: null });
+  if (hit("[data-assign-another]")) return setAssign({ done: null, tripRef: null, vehicleId: null, driverId: null, showAll: false });
+  if (hit("[data-assign-undo]")) { A.undo(); setAssign({ done: null }); return toast("Assignment undone."); }
+
+  if (hit("[data-assign-confirm]")) {
+    const a = assignState();
+    const trip = S.tripByRef(a.tripRef) || S.unassignedTrips()[0];
+    A.assignVehicle(trip.ref, a.vehicleId, a.driverId);
+    const t = S.tripByRef(trip.ref);
+    setAssign({ done: { tripRef: trip.ref, vehicleId: a.vehicleId } });
+    toast(`${trip.ref} assigned · U-ETDS filed · €${nfmt(t.cost.total)} costed`, {
+      action: "Undo",
+      onAction: () => { A.undo(); setAssign({ done: null }); toast("Assignment undone."); },
+    });
     return;
   }
 
@@ -1740,12 +2062,8 @@ document.addEventListener("input", e => {
 });
 
 document.addEventListener("keydown", e => {
-  const row = e.target.closest?.("[data-vehicle]");
-  if (row && (e.key === "Enter" || e.key === " ")) {
-    e.preventDefault();
-    const id = row.dataset.vehicle;
-    return Store.ui({ selected: Store.state.ui.selected === id ? null : id });
-  }
+  const card = e.target.closest?.("[data-vehicle],[data-rank]");
+  if (card && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); return card.click(); }
   if (e.key === "/" && !/^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName)) {
     const box = document.querySelector('[data-role="search"]');
     if (box) { e.preventDefault(); box.focus(); box.select(); }

@@ -1,0 +1,15 @@
+{
+  "name": "modaltrans-fleet-demo",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Concept for the Fleet Management module Modaltrans lists as coming soon.",
+  "scripts": {
+    "dev": "node scripts/dev-server.mjs",
+    "build": "node scripts/build.mjs",
+    "preview": "npm run build && node scripts/dev-server.mjs --dist"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
