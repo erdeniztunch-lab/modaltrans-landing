@@ -1124,6 +1124,54 @@ table.data tbody tr.is-idle:hover { background: transparent; }
 
 .brief footer { margin-top: 4rem; padding-top: 1.5rem; border-top: 1px solid var(--b-line); font-size: 0.83rem; color: var(--b-muted); }
 
+
+/* ============================================================================
+   GUIDED TOUR — a spotlight cut out of a dimmed page, plus a coach mark.
+   The spotlight never swallows clicks; the highlighted control stays live.
+   ========================================================================= */
+.spot {
+  position: fixed; z-index: 70; pointer-events: none;
+  box-shadow: 0 0 0 9999px var(--scrim);
+  border-radius: var(--r-card);
+  transition: left var(--dur-move) var(--ease), top var(--dur-move) var(--ease),
+              width var(--dur-move) var(--ease), height var(--dur-move) var(--ease);
+}
+@media (prefers-reduced-motion: reduce) { .spot { transition: none; } }
+
+.coach {
+  position: fixed; z-index: 71;
+  width: min(23rem, calc(100vw - 2rem));
+  display: flex; flex-direction: column; gap: var(--sp-4);
+  padding: var(--sp-6);
+  background: var(--surface); color: var(--text);
+  border: 1px solid var(--border); border-radius: var(--r-panel);
+  box-shadow: var(--shadow-modal);
+}
+.coach__eyebrow {
+  font-size: var(--fs-micro); font-weight: var(--w-label);
+  letter-spacing: .1em; text-transform: uppercase; color: var(--accent);
+}
+.coach__text { font-size: var(--fs-lg); line-height: 1.35; font-weight: var(--w-strong); letter-spacing: -.01em; }
+.coach__sub { font-size: var(--fs-sm); color: var(--text-2); }
+.coach__foot { display: flex; align-items: center; gap: var(--sp-4); margin-top: var(--sp-2); }
+.coach__count { font-size: var(--fs-xs); color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.coach:focus { outline: none; }
+
+/* First visit only: a quiet pointer at the button most people would miss */
+.nudge {
+  display: inline-flex; align-items: center; gap: var(--sp-3);
+  height: 26px; padding: 0 6px 0 10px; border-radius: var(--r-pill);
+  background: var(--accent-soft); color: var(--accent);
+  border: 1px solid var(--accent-border);
+  font-size: var(--fs-xs); font-weight: var(--w-label); white-space: nowrap;
+}
+.nudge button {
+  display: inline-flex; padding: 2px; border: 0; border-radius: var(--r-pill);
+  background: none; color: inherit; cursor: pointer; opacity: .75;
+}
+.nudge button:hover { opacity: 1; }
+@media (max-width: 720px) { .nudge { display: none; } }
+
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
@@ -1184,6 +1232,9 @@ table.data tbody tr.is-idle:hover { background: transparent; }
         <span class="u-row" style="gap:8px"><span class="avatar" aria-hidden="true">SB</span>
           <span><span class="who__name">Selin Bayrak</span><br><span class="who__role">Dispatch</span></span></span>
         <button class="btn btn--primary btn--sm" id="newtrip-btn" type="button"><svg class="ico ico--sm"><use href="#i-plus"/></svg>New trip</button>
+        <span class="nudge" id="tour-nudge" hidden>New here? The 90-second story
+          <button type="button" data-tour-act="dismiss" aria-label="Dismiss">
+            <svg class="ico ico--sm"><use href="#i-x"/></svg></button></span>
         <button class="btn btn--secondary btn--sm" id="tour-btn" type="button">
           <svg class="ico ico--sm"><use href="#i-play"/></svg>Play story
         </button>
@@ -1198,6 +1249,7 @@ table.data tbody tr.is-idle:hover { background: transparent; }
 </div>
 
 <div id="drawer-host"></div>
+<div id="tour-host"></div>
 <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
 
 <script>
@@ -2024,7 +2076,11 @@ function navigate() {
   document.getElementById("view").focus({ preventScroll: true });
 }
 addEventListener("hashchange", navigate);
-addEventListener("scroll", () => scrollMemory.set(currentRoute().id, window.scrollY), { passive: true });
+addEventListener("scroll", () => {
+  scrollMemory.set(currentRoute().id, window.scrollY);
+  if (Tour.active) Tour.place(0);
+}, { passive: true });
+addEventListener("resize", () => { if (Tour.active) Tour.place(0); });
 Store.subscribe(render);
 
 /* ============================================================================
@@ -2335,7 +2391,7 @@ views.overview = () => {
 
     <div class="grid-split">
       <div class="u-col" style="gap:var(--sp-5)">
-        <section class="card">
+        <section class="card" data-tour="attention">
           <div class="card__head" style="padding-bottom:var(--sp-5)">
             <div><div class="card__title">Needs attention</div>
                  <div class="card__hint">Worst first — nothing here is optional</div></div>
@@ -2558,7 +2614,7 @@ views.trips = () => {
     const d = t.driverId ? S.drivers().find(x => x.id === t.driverId) : null;
     const blockers = t.status === "active" ? blockersFor(t) : 0;
     return `
-    <div class="triprow2" ${v ? `role="button" tabindex="0" data-triprow="${v.id}"` : ""}>
+    <div class="triprow2" data-triprow-ref="${esc(t.ref)}" ${v ? `role="button" tabindex="0" data-triprow="${v.id}"` : ""}>
       <div class="triprow2__top">
         <span class="identifier" style="color:var(--text)">${esc(t.ref)}</span>
         <span class="u-sm u-dim">${esc(t.origin)} → ${esc(t.destination)}</span>
@@ -2696,6 +2752,8 @@ function setAssign(patch) { Store.ui({ assign: { ...assignState(), ...patch } })
 function assignResult(done) {
   const trip = S.tripByRef(done.tripRef);
   const veh = Store.state.vehicles.find(v => v.id === done.vehicleId);
+  /* An undo elsewhere can pull the assignment out from under this screen. */
+  if (!trip || !veh || !trip.cost) return null;
   const rows = [
     ["Vehicle", `${esc(veh.plate)} moved from Available to <b>On trip</b>`],
     ["Trip", `Six-leg chain created · ${esc(trip.origin)} → ${esc(trip.destination)}`],
@@ -2715,7 +2773,7 @@ function assignResult(done) {
 
   return `
   <div class="u-col" style="gap:var(--sp-5);max-width:56rem">
-    <section class="card">
+    <section class="card" data-tour="result">
       <div class="card__head">
         <div>
           <div class="card__title">${esc(trip.ref)} assigned to ${esc(veh.plate)}</div>
@@ -2740,7 +2798,11 @@ function assignResult(done) {
 
 views.assign = () => {
   const a = assignState();
-  if (a.done) return assignResult(a.done);
+  if (a.done) {
+    const done = assignResult(a.done);
+    if (done) return done;
+    a.done = null;              // the assignment was undone; fall back to the picker
+  }
 
   const trips = S.unassignedTrips();
   if (!trips.length) return soon("Every leg has a truck",
@@ -2805,7 +2867,7 @@ views.assign = () => {
 
   return `
   <div class="split">
-    <section class="panel">
+    <section class="panel" data-tour="legs">
       <div class="toolbar"><div><div class="card__title">Unassigned legs</div>
         <div class="card__hint tnum">${trips.length} waiting · pickup within 48 hours</div></div></div>
       <div class="triplist">${list}</div>
@@ -3187,6 +3249,208 @@ views.about = () => `
 </article>`;
 
 /* ============================================================================
+   GUIDED TOUR
+   Five steps that drive the app rather than describe it. Targets are found by
+   query on every step, never held as node references — the view re-renders
+   underneath and a held node would be stale by the time we measured it.
+   ========================================================================= */
+
+/** The leg the story runs on: dangerous goods, so the ADR rule has teeth. */
+const tourLeg = () => S.unassignedTrips().find(t => t.adr) || S.unassignedTrips()[0];
+
+/** The truck that is free but whose driver has run out of hours. */
+const tourBlocked = ref => {
+  const ranked = S.rankVehiclesForLeg(ref);
+  return ranked.find(r => r.blockers === 1 && r.checks.some(c => c.level === "bad" && c.name === "Driver hours"))
+      || ranked.find(r => r.blockers > 0)
+      || ranked[0];
+};
+
+const TOUR = [
+  {
+    text: () => `${S.needAttention()} trucks need you before your customer calls.`,
+    sub: () => "Worst first: expired papers, overdue service, trucks off the road. Nothing here is optional.",
+    enter() { closeDrawer(); Store.state.ui.tripTab = "active"; location.hash = "#/overview"; },
+    target: () => '[data-tour="attention"]',
+  },
+  {
+    text: () => `${S.unassignedTrips().length} of them are loads with no truck yet.`,
+    sub: () => {
+      const t = tourLeg();
+      return `Take ${t.ref} — ${t.origin} to ${t.destination}, ${t.weightT}t${t.adr ? ", and it is dangerous goods" : ""}.`;
+    },
+    enter() {
+      const t = tourLeg();
+      Object.assign(Store.state.ui.assign,
+        { tripRef: t.ref, vehicleId: null, driverId: null, showAll: false, done: null });
+      location.hash = "#/assign";
+    },
+    target: () => '[data-tour="legs"]',
+  },
+  {
+    text: () => "The system checks compliance before you commit.",
+    sub: () => {
+      const r = tourBlocked(tourLeg().ref);
+      const bad = r.checks.find(c => c.level === "bad");
+      return `${r.vehicle.plate} is free and certified — but ${bad ? bad.why.toLowerCase() : "a check fails"}. Assign stays locked.`;
+    },
+    enter() {
+      const r = tourBlocked(tourLeg().ref);
+      Object.assign(Store.state.ui.assign, { vehicleId: r.vehicle.id, driverId: null, done: null });
+      location.hash = "#/assign";
+    },
+    target: () => '[data-rank][aria-selected="true"]',
+  },
+  {
+    text: () => "One click files U-ETDS, costs the trip, and tells your customer.",
+    sub: () => "Swapping in a rested driver clears the block. Everything below happened from that one confirmation.",
+    enter() {
+      const leg = tourLeg();
+      const r = tourBlocked(leg.ref);
+      const fix = r.checks.find(c => c.act && c.act.type === "swapDriver");
+      const driverId = fix ? fix.act.driverId : null;
+      A.assignVehicle(leg.ref, r.vehicle.id, driverId);
+      Tour.committed = true;
+      Tour.tripRef = leg.ref;
+      Object.assign(Store.state.ui.assign, { done: { tripRef: leg.ref, vehicleId: r.vehicle.id } });
+      location.hash = "#/assign";
+    },
+    target: () => '[data-tour="result"]',
+  },
+  {
+    text: () => "It is the same shipment your customer already sees.",
+    sub: () => "One record: the truck, the six-leg chain, the declarations, the cost. No second system to keep in step.",
+    enter() {
+      Store.state.ui.tripTab = "active";
+      location.hash = "#/trips";
+    },
+    target: () => (Tour.tripRef ? `[data-triprow-ref="${Tour.tripRef}"]` : ".triprow2"),
+  },
+];
+
+const Tour = {
+  active: false, step: 0, committed: false, tripRef: null, simWas: false, raf: 0,
+
+  seen() { try { return localStorage.getItem("mt-tour-seen") === "1"; } catch { return true; } },
+  markSeen() { try { localStorage.setItem("mt-tour-seen", "1"); } catch {} },
+
+  start() {
+    this.active = true; this.step = 0; this.committed = false; this.tripRef = null;
+    this.simWas = Sim.running;
+    Sim.stop();                       // otherwise pins drift and a delay toast lands mid-sentence
+    this.markSeen();
+    this.hideNudge();
+    this.go(0);
+  },
+
+  go(i) {
+    this.step = i;
+    TOUR[i].enter?.();
+    Store.emit();                     // let the view catch up with what enter() changed
+    this.paint();
+  },
+
+  next() { this.step < TOUR.length - 1 ? this.go(this.step + 1) : this.end(false); },
+  replay() { this.end(true); this.start(); },
+
+  /** cleanup=true rolls back the assignment the tour made, so the demo repeats. */
+  end(cleanup = true) {
+    cancelAnimationFrame(this.raf);
+    if (cleanup && this.committed) {
+      A.undo(); this.committed = false; this.tripRef = null;
+      Object.assign(Store.state.ui.assign,
+        { done: null, vehicleId: null, driverId: null, showAll: false });
+    }
+    this.active = false;
+    const host = document.getElementById("tour-host");
+    if (host) host.innerHTML = "";
+    if (this.simWas) Sim.start();
+    Store.emit();
+    document.getElementById("tour-btn")?.focus();
+  },
+
+  paint() {
+    const host = document.getElementById("tour-host");
+    if (!host || !this.active) return;
+    const s = TOUR[this.step];
+    const last = this.step === TOUR.length - 1;
+
+    host.innerHTML = `
+      <div class="spot" id="tour-spot"></div>
+      <div class="coach" id="tour-coach" role="dialog" aria-live="polite" aria-labelledby="coach-text" tabindex="-1">
+        <span class="coach__eyebrow">The story</span>
+        <p class="coach__text" id="coach-text">${esc(s.text())}</p>
+        <p class="coach__sub">${esc(s.sub())}</p>
+        <div class="coach__foot">
+          <span class="coach__count">${this.step + 1} / ${TOUR.length}</span>
+          <span class="u-grow"></span>
+          ${last
+            ? `<button class="btn btn--ghost btn--sm" type="button" data-tour-act="replay">Replay</button>
+               <button class="btn btn--primary btn--sm" type="button" data-tour-act="done">Done</button>`
+            : `<button class="btn btn--ghost btn--sm" type="button" data-tour-act="skip">Skip tour</button>
+               <button class="btn btn--primary btn--sm" type="button" data-tour-act="next">Next</button>`}
+        </div>
+      </div>`;
+
+    document.getElementById("tour-coach").focus({ preventScroll: true });
+    this.place(0);
+  },
+
+  /** The target may not exist for a frame or two after a route change. */
+  place(tries) {
+    cancelAnimationFrame(this.raf);
+    this.raf = requestAnimationFrame(() => {
+      if (!this.active) return;
+      const spot = document.getElementById("tour-spot");
+      const coach = document.getElementById("tour-coach");
+      if (!spot || !coach) return;
+
+      const el = document.querySelector(TOUR[this.step].target());
+      if (!el) {
+        if (tries < 30) return this.place(tries + 1);
+        spot.style.display = "none";
+        coach.style.left = "50%"; coach.style.top = "50%";
+        coach.style.transform = "translate(-50%,-50%)";
+        return;
+      }
+
+      el.scrollIntoView({ block: "center", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+
+      requestAnimationFrame(() => {
+        const r = el.getBoundingClientRect();
+        const pad = 6;
+        spot.style.display = "";
+        spot.style.left = (r.left - pad) + "px";
+        spot.style.top = (r.top - pad) + "px";
+        spot.style.width = (r.width + pad * 2) + "px";
+        spot.style.height = (r.height + pad * 2) + "px";
+
+        const cr = coach.getBoundingClientRect();
+        const gap = 14;
+        let top = r.bottom + gap;
+        if (top + cr.height > innerHeight - 12) top = Math.max(12, r.top - gap - cr.height);
+        let left = r.left + r.width / 2 - cr.width / 2;
+        left = Math.max(12, Math.min(left, innerWidth - cr.width - 12));
+        coach.style.transform = "";
+        coach.style.left = left + "px";
+        coach.style.top = top + "px";
+      });
+    });
+  },
+
+  showNudge() {
+    if (this.seen()) return;
+    const n = document.getElementById("tour-nudge");
+    if (n) n.hidden = false;
+  },
+  hideNudge() {
+    const n = document.getElementById("tour-nudge");
+    if (n) n.hidden = true;
+  },
+  dismissNudge() { this.markSeen(); this.hideNudge(); },
+};
+
+/* ============================================================================
    EVENTS — one delegated listener for the whole app
    ========================================================================= */
 document.addEventListener("click", e => {
@@ -3195,7 +3459,17 @@ document.addEventListener("click", e => {
 
   if (hit("#theme-btn")) return Prefs.toggleTheme();
   if (hit("#density-btn")) return Prefs.toggleDensity();
-  if (hit("#tour-btn")) return toast("The guided story arrives in Phase 8.");
+  if (hit("#tour-btn")) return Tour.start();
+
+  const tourBtn = hit("[data-tour-act]");
+  if (tourBtn) {
+    const what = tourBtn.dataset.tourAct;
+    if (what === "next") return Tour.next();
+    if (what === "skip") return Tour.end(true);
+    if (what === "done") return Tour.end(false);
+    if (what === "replay") return Tour.replay();
+    if (what === "dismiss") return Tour.dismissNudge();
+  }
   if (hit("[data-sim]")) return Sim.toggle();
 
   const clu = hit("[data-cluster]");
@@ -3341,6 +3615,22 @@ document.addEventListener("input", e => {
 });
 
 document.addEventListener("keydown", e => {
+  if (Tour.active) {
+    if (e.key === "Escape") { e.preventDefault(); return Tour.end(true); }
+    if (e.key === "Tab") {
+      const f = [...document.querySelectorAll(".coach button:not([disabled])")];
+      if (!f.length) return;
+      const first = f[0], last = f[f.length - 1];
+      const inside = document.querySelector(".coach")?.contains(document.activeElement);
+      if (e.shiftKey && (document.activeElement === first || !inside)) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      return;
+    }
+    if (e.key === "Enter" && document.activeElement?.tagName !== "BUTTON") {
+      e.preventDefault(); return Tour.next();
+    }
+  }
+
   const open = Store.state.ui.drawer.vehicleId;
   if (open && e.key === "Escape") { e.preventDefault(); return closeDrawer(); }
   if (open && e.key === "Tab") {
@@ -3377,6 +3667,7 @@ navigate();
 /* Live tracking: off when the reader asked for less motion, paused when the
    tab is in the background. */
 if (!Sim.reduced()) Sim.start();
+Tour.showNudge();
 document.addEventListener("visibilitychange", () => {
   document.visibilityState === "hidden" ? Sim.stop() : (Sim.reduced() || Sim.start());
 });
