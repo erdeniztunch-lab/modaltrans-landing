@@ -13,14 +13,14 @@
 
 | Faz | Ad | Süre | Durum |
 |:---:|---|---:|:---:|
-| 0 | Temel ve kabuk | 55 dk | ⬜ |
-| 1 | Veri ve state çekirdeği | 70 dk | ⬜ |
-| 2 | Vehicles | 85 dk | ⬜ |
+| 0 | Temel ve kabuk | 55 dk | ✅ |
+| 1 | Veri ve state çekirdeği | 70 dk | ✅ |
+| 2 | Vehicles | 85 dk | ✅ |
 | 3 | ⭐ Assign akışı | 110 dk | ⬜ |
-| 4 | Overview | 70 dk | ⬜ |
+| 4 | Overview | 70 dk | ✅ |
 | 5 | Vehicle drawer | 70 dk | ⬜ |
 | 6 | Trips ve Drivers | 65 dk | ⬜ |
-| 7 | Koridor haritası ve canlı simülasyon | 80 dk | ⬜ |
+| 7 | Koridor haritası ve canlı simülasyon | 80 dk | 🟡 |
 | 8 | Rehberli tur | 50 dk | ⬜ |
 | 9 | Cila, erişilebilirlik, metin | 65 dk | ⬜ |
 | 10 | Gerekçe bölümü ve yayın | 40 dk | ⬜ |
