@@ -1,0 +1,706 @@
+<title>Modaltrans Fleet</title>
+<style>
+/* ============================================================================
+   1. TOKENS — Modaltrans design system
+   Extracted from modal-trans.webflow.shared.db9d747ba.min.css
+   See fleet-management-concept.md §2
+   ========================================================================= */
+:root {
+  /* --- Brand: orange/red ------------------------------------------------ */
+  --brand-050: oklch(.9898 .0107 27.63);
+  --brand-100: oklch(.9679 .0106 27.48);
+  --brand-200: oklch(.8839 .0527 27.46);
+  --brand-300: oklch(.7798 .108  31.86);
+  --brand-500: oklch(.6399 .189  32.51);   /* ≈ #F05322 — primary */
+  --brand-600: oklch(.5932 .172  32.23);
+  --brand-700: oklch(.5168 .143  32.52);
+  --brand-800: oklch(.4438 .114  32.59);
+  --brand-900: oklch(.3801 .091  32.88);
+
+  /* --- Neutrals: cool/blue-tinted --------------------------------------- */
+  --gray-050: oklch(.9818 .002 250.9);
+  --gray-100: oklch(.9571 .004 249.4);
+  --gray-150: oklch(.94   .004 240);
+  --gray-300: oklch(.9019 .004 249.7);
+  --gray-500: oklch(.7511 .004 249.3);
+  --gray-600: oklch(.6136 .004 250.4);
+  --gray-800: oklch(.4079 .004 250.7);
+  --gray-900: oklch(.342  .002 254.4);
+  --gray-950: oklch(.1804 .013 259.6);
+
+  --black-800: oklch(.2461 .005 251.3);
+  --black-850: oklch(.2285 .007 253.9);
+  --black-900: oklch(.1917 .007 254.8);
+  --black-950: oklch(.1804 .013 259.6);
+
+  --white-pure: oklch(1 0 0);
+  --white-050:  oklch(.9956 0 0);
+  --white-100:  oklch(.9818 .002 250.9);
+  --white-200:  oklch(.9571 .004 249.4);
+  --white-300:  oklch(.9383 .004 250.3);
+
+  /* --- Accents ---------------------------------------------------------- */
+  --accent-blue: oklch(.596 .124 263.7);
+  --focus-ring:  #4d65ff;
+
+  /* --- Status ----------------------------------------------------------- */
+  --ok-fg:    oklch(.52 .13 155);
+  --ok-bg:    oklch(.95 .04 155);
+  --warn-fg:  oklch(.55 .12 75);
+  --warn-bg:  oklch(.96 .06 85);
+  --bad-fg:   oklch(.53 .20 18);
+  --bad-bg:   oklch(.95 .04 18);
+  --info-fg:  oklch(.50 .12 263.7);
+  --info-bg:  oklch(.95 .03 263.7);
+
+  /* --- Signature gradients ---------------------------------------------- */
+  --gradient-dusk-horizon: linear-gradient(in oklab to top,
+     oklch(.933 .015 259), oklch(.865 .038 261.2),
+     oklch(.596 .124 263.7), oklch(.208 .059 265.2));
+  --gradient-deep-ocean: linear-gradient(180deg in oklab,
+     oklch(.938 .004 250.3) 5%, oklch(.596 .124 263.7) 40%,
+     oklch(.180 .013 259.6) 90%, oklch(0 0 0));
+  --gradient-ocean-fire: linear-gradient(90deg in oklab,
+     oklch(.596 .124 263.7), oklch(.64 .189 32.51));
+  --gradient-midnight-depth: linear-gradient(in oklab to bottom,
+     oklch(.228 .007 253.9), oklch(.180 .013 259.6));
+
+  /* --- Type scale (fluid) ----------------------------------------------- */
+  --fs-xs:   .75rem;
+  --fs-sm:   .8125rem;
+  --fs-base: .875rem;
+  --fs-md:   1rem;
+  --fs-lg:   clamp(1rem,     .9rem   + .5vw,   1.125rem);
+  --fs-xl:   clamp(1.125rem, .93rem  + .9vw,   1.5rem);
+  --fs-2xl:  clamp(1.5rem,   1.2rem  + 1.5vw,  2rem);
+  --fs-3xl:  clamp(1.875rem, 1.4rem  + 2.3vw,  2.5rem);
+
+  /* --- Space ------------------------------------------------------------ */
+  --s-xs: .25rem;  --s-s: .5rem;   --s-m: 1rem;   --s-l: 1.5rem;
+  --s-xl: 2rem;    --s-2xl: 3rem;  --s-3xl: 4rem;
+
+  /* --- Radius (site favours 1rem) --------------------------------------- */
+  --r-tiny: .25rem; --r-s: .5rem; --r-m: .75rem;
+  --r-l: 1rem;      --r-xl: 1.5rem; --r-pill: 99rem;
+
+  /* --- Layout ----------------------------------------------------------- */
+  --sidebar-w: 15rem;
+  --topbar-h: 3.5rem;
+
+  /* --- Semantic roles: LIGHT (the complete palette lives here) ----------- */
+  --bg:            var(--gray-050);
+  --surface:       var(--white-pure);
+  --surface-2:     var(--gray-100);
+  --surface-3:     var(--gray-150);
+  --border:        var(--gray-300);
+  --border-strong: var(--gray-500);
+  --text:          var(--black-900);
+  --text-2:        var(--gray-800);
+  --text-muted:    var(--gray-600);
+  --on-accent:     var(--white-pure);
+  --accent:        var(--brand-500);
+  --accent-hover:  var(--brand-600);
+  --accent-soft:   var(--brand-050);
+  --rail:          var(--white-pure);
+  --shadow-card:   0 1px 2px rgb(16 24 40 / .04), 0 1px 3px rgb(16 24 40 / .06);
+  --shadow-pop:    0 8px 24px rgb(16 24 40 / .10), 0 2px 6px rgb(16 24 40 / .06);
+  --shadow-brand:  0 4px 12px 2px rgb(240 83 34 / .18);
+}
+
+/* Dark — system preference, unless the reader forced light */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:            var(--black-950);
+    --surface:       var(--black-900);
+    --surface-2:     var(--black-850);
+    --surface-3:     var(--black-800);
+    --border:        oklch(.30 .008 254);
+    --border-strong: oklch(.42 .008 254);
+    --text:          var(--gray-050);
+    --text-2:        var(--gray-300);
+    --text-muted:    var(--gray-500);
+    --accent:        var(--brand-500);
+    --accent-hover:  var(--brand-300);
+    --accent-soft:   oklch(.30 .06 32);
+    --rail:          var(--black-900);
+    --ok-fg:   oklch(.80 .14 155);  --ok-bg:   oklch(.30 .05 155);
+    --warn-fg: oklch(.84 .13 85);   --warn-bg: oklch(.32 .05 85);
+    --bad-fg:  oklch(.75 .16 20);   --bad-bg:  oklch(.31 .07 20);
+    --info-fg: oklch(.80 .10 263.7);--info-bg: oklch(.30 .05 263.7);
+    --shadow-card: 0 1px 2px rgb(0 0 0 / .30), 0 1px 3px rgb(0 0 0 / .24);
+    --shadow-pop:  0 8px 24px rgb(0 0 0 / .45), 0 2px 6px rgb(0 0 0 / .30);
+  }
+}
+/* Dark — explicitly chosen, wins in both directions */
+:root[data-theme="dark"] {
+  --bg:            var(--black-950);
+  --surface:       var(--black-900);
+  --surface-2:     var(--black-850);
+  --surface-3:     var(--black-800);
+  --border:        oklch(.30 .008 254);
+  --border-strong: oklch(.42 .008 254);
+  --text:          var(--gray-050);
+  --text-2:        var(--gray-300);
+  --text-muted:    var(--gray-500);
+  --accent:        var(--brand-500);
+  --accent-hover:  var(--brand-300);
+  --accent-soft:   oklch(.30 .06 32);
+  --rail:          var(--black-900);
+  --ok-fg:   oklch(.80 .14 155);  --ok-bg:   oklch(.30 .05 155);
+  --warn-fg: oklch(.84 .13 85);   --warn-bg: oklch(.32 .05 85);
+  --bad-fg:  oklch(.75 .16 20);   --bad-bg:  oklch(.31 .07 20);
+  --info-fg: oklch(.80 .10 263.7);--info-bg: oklch(.30 .05 263.7);
+  --shadow-card: 0 1px 2px rgb(0 0 0 / .30), 0 1px 3px rgb(0 0 0 / .24);
+  --shadow-pop:  0 8px 24px rgb(0 0 0 / .45), 0 2px 6px rgb(0 0 0 / .30);
+}
+
+/* ============================================================================
+   2. BASE
+   ========================================================================= */
+/* General Sans — embedded so no CDN is needed (Fontshare is CSP-blocked) */
+/*__FONT__*/
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "General Sans", -apple-system, BlinkMacSystemFont, "Segoe UI",
+               Roboto, Helvetica, Arial, sans-serif;
+  font-size: var(--fs-base);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4 { margin: 0; font-weight: 600; line-height: 1.25; letter-spacing: -.011em; }
+h1 { font-size: var(--fs-2xl); }
+h2 { font-size: var(--fs-xl); }
+h3 { font-size: var(--fs-lg); }
+p  { margin: 0; }
+button, input, select { font: inherit; color: inherit; }
+img, svg { max-width: 100%; }
+[hidden] { display: none !important; }
+
+:focus-visible {
+  outline: .125rem solid var(--focus-ring);
+  outline-offset: .125rem;
+  border-radius: var(--r-tiny);
+}
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+.u-muted   { color: var(--text-muted); }
+.u-dim     { color: var(--text-2); }
+.u-xs      { font-size: var(--fs-xs); }
+.u-sm      { font-size: var(--fs-sm); }
+.u-num     { font-variant-numeric: tabular-nums; }
+.u-strong  { font-weight: 600; }
+.u-row     { display: flex; align-items: center; gap: var(--s-s); }
+.u-col     { display: flex; flex-direction: column; }
+.u-spread  { display: flex; align-items: center; justify-content: space-between; gap: var(--s-m); }
+.u-wrap    { flex-wrap: wrap; }
+.u-grow    { flex: 1; min-width: 0; }
+.u-truncate{ overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ============================================================================
+   3. COMPONENTS
+   ========================================================================= */
+
+/* --- App shell ---------------------------------------------------------- */
+.app {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  min-height: 100dvh;
+}
+
+.rail {
+  background: var(--rail);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-l);
+  padding: var(--s-m) var(--s-s);
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+  overflow-y: auto;
+}
+
+.brand {
+  display: flex; align-items: center; gap: .625rem;
+  padding: var(--s-s) var(--s-s) 0;
+  text-decoration: none; color: inherit;
+}
+.brand__mark {
+  width: 1.75rem; height: 1.75rem; border-radius: var(--r-s);
+  background: var(--gradient-ocean-fire);
+  display: grid; place-items: center; flex: none;
+  color: #fff; font-weight: 700; font-size: .8125rem; letter-spacing: -.03em;
+}
+.brand__name { font-weight: 600; letter-spacing: -.02em; line-height: 1.1; }
+.brand__sub  { font-size: var(--fs-xs); color: var(--text-muted); line-height: 1.2; }
+
+.nav { display: flex; flex-direction: column; gap: 2px; }
+.nav__label {
+  font-size: var(--fs-xs); font-weight: 600; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--text-muted);
+  padding: 0 var(--s-s) var(--s-xs);
+}
+.nav__item {
+  display: flex; align-items: center; gap: .625rem;
+  padding: .5rem .625rem; border-radius: var(--r-s);
+  text-decoration: none; color: var(--text-2);
+  font-weight: 500; cursor: pointer;
+  border: 0; background: none; width: 100%; text-align: left;
+}
+.nav__item:hover { background: var(--surface-2); color: var(--text); }
+.nav__item[aria-current="page"] {
+  background: var(--accent-soft); color: var(--accent); font-weight: 600;
+}
+.nav__item[aria-current="page"] .icon { color: var(--accent); }
+.nav__count {
+  margin-left: auto; font-size: var(--fs-xs); color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.rail__foot { margin-top: auto; padding: var(--s-s); }
+
+/* --- Top bar ------------------------------------------------------------ */
+.main { display: flex; flex-direction: column; min-width: 0; }
+
+.topbar {
+  position: sticky; top: 0; z-index: 20;
+  height: var(--topbar-h);
+  display: flex; align-items: center; gap: var(--s-m);
+  padding: 0 var(--s-l);
+  background: color-mix(in oklab, var(--bg) 85%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+}
+.topbar__title { font-size: var(--fs-md); font-weight: 600; letter-spacing: -.01em; }
+.topbar__actions { margin-left: auto; display: flex; align-items: center; gap: var(--s-s); }
+
+.view { padding: var(--s-l); flex: 1; }
+@media (max-width: 640px) { .view { padding: var(--s-m); } }
+
+/* --- Button ------------------------------------------------------------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: .4375rem;
+  padding: .4375rem .75rem;
+  border-radius: var(--r-s);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--fs-base); font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .12s ease, border-color .12s ease, transform .12s ease;
+}
+.btn:hover:not(:disabled) { background: var(--surface-2); }
+.btn:active:not(:disabled) { transform: translateY(.5px); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+
+.btn--primary {
+  background: var(--accent); border-color: var(--accent); color: var(--on-accent);
+  box-shadow: var(--shadow-brand);
+}
+.btn--primary:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
+.btn--ghost { background: none; border-color: transparent; }
+.btn--ghost:hover:not(:disabled) { background: var(--surface-2); }
+.btn--sm { padding: .25rem .5rem; font-size: var(--fs-sm); }
+.btn--icon { padding: .4375rem; }
+
+/* --- Chip / status ------------------------------------------------------ */
+.chip {
+  display: inline-flex; align-items: center; gap: .3125rem;
+  padding: .125rem .4375rem;
+  border-radius: var(--r-tiny);
+  font-size: var(--fs-xs); font-weight: 600; line-height: 1.4;
+  white-space: nowrap;
+  background: var(--surface-2); color: var(--text-2);
+  border: 1px solid transparent;
+}
+.chip--ok   { background: var(--ok-bg);   color: var(--ok-fg); }
+.chip--warn { background: var(--warn-bg); color: var(--warn-fg); }
+.chip--bad  { background: var(--bad-bg);  color: var(--bad-fg); }
+.chip--info { background: var(--info-bg); color: var(--info-fg); }
+.chip--outline { background: none; border-color: var(--border); color: var(--text-muted); }
+.chip .icon { width: .75rem; height: .75rem; }
+
+/* --- Card --------------------------------------------------------------- */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-l);
+  box-shadow: var(--shadow-card);
+}
+.card__head {
+  padding: var(--s-m) var(--s-m) 0;
+  display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s-m);
+}
+.card__body { padding: var(--s-m); }
+.card__title { font-size: var(--fs-md); font-weight: 600; }
+.card__hint  { font-size: var(--fs-sm); color: var(--text-muted); margin-top: .125rem; }
+
+/* --- Stat tile ---------------------------------------------------------- */
+.tile {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-l);
+  padding: var(--s-m);
+  box-shadow: var(--shadow-card);
+  display: flex; flex-direction: column; gap: .25rem;
+}
+.tile__label { font-size: var(--fs-sm); color: var(--text-muted); font-weight: 500; }
+.tile__value { font-size: var(--fs-2xl); font-weight: 600; letter-spacing: -.02em;
+               font-variant-numeric: tabular-nums; line-height: 1.1; }
+.tile__note  { font-size: var(--fs-xs); color: var(--text-muted); }
+
+/* --- Table -------------------------------------------------------------- */
+.tablewrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--r-l);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+table.data { width: 100%; border-collapse: collapse; font-size: var(--fs-base); }
+table.data th {
+  text-align: left; font-size: var(--fs-xs); font-weight: 600;
+  letter-spacing: .04em; text-transform: uppercase; color: var(--text-muted);
+  padding: .625rem var(--s-m); border-bottom: 1px solid var(--border);
+  background: var(--surface-2); white-space: nowrap;
+}
+table.data td {
+  padding: .625rem var(--s-m); border-bottom: 1px solid var(--border);
+  vertical-align: middle; white-space: nowrap;
+}
+table.data tbody tr:last-child td { border-bottom: 0; }
+table.data tbody tr { cursor: pointer; }
+table.data tbody tr:hover { background: var(--surface-2); }
+
+/* --- Empty state -------------------------------------------------------- */
+.empty {
+  display: flex; flex-direction: column; align-items: center; gap: var(--s-s);
+  padding: var(--s-3xl) var(--s-m); text-align: center;
+}
+.empty__icon {
+  width: 2.5rem; height: 2.5rem; border-radius: var(--r-pill);
+  background: var(--surface-2); color: var(--text-muted);
+  display: grid; place-items: center; margin-bottom: var(--s-xs);
+}
+.empty__title { font-weight: 600; }
+.empty__text  { color: var(--text-muted); max-width: 26rem; font-size: var(--fs-base); }
+
+/* --- Drawer ------------------------------------------------------------- */
+.scrim {
+  position: fixed; inset: 0; z-index: 60;
+  background: rgb(10 14 20 / .45);
+  animation: fade .16s ease;
+}
+.drawer {
+  position: fixed; top: 0; right: 0; bottom: 0; z-index: 61;
+  width: min(34rem, 100%);
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  box-shadow: var(--shadow-pop);
+  display: flex; flex-direction: column;
+  animation: slidein .2s cubic-bezier(.32,.72,0,1);
+}
+.drawer__head {
+  padding: var(--s-m); border-bottom: 1px solid var(--border);
+  display: flex; align-items: flex-start; gap: var(--s-m);
+}
+.drawer__body { padding: var(--s-m); overflow-y: auto; flex: 1; }
+@keyframes slidein { from { transform: translateX(1.5rem); opacity: 0; } }
+@keyframes fade    { from { opacity: 0; } }
+
+/* --- Toast -------------------------------------------------------------- */
+.toasts {
+  position: fixed; z-index: 80; bottom: var(--s-m); left: 50%;
+  transform: translateX(-50%);
+  display: flex; flex-direction: column-reverse; gap: var(--s-s);
+  width: min(30rem, calc(100vw - 2rem));
+}
+.toast {
+  display: flex; align-items: center; gap: var(--s-s);
+  padding: .625rem .75rem;
+  background: var(--black-900); color: var(--gray-050);
+  border-radius: var(--r-m); box-shadow: var(--shadow-pop);
+  font-size: var(--fs-base);
+  animation: toastin .2s cubic-bezier(.32,.72,0,1);
+}
+:root[data-theme="dark"] .toast { background: var(--surface-3); border: 1px solid var(--border); }
+@keyframes toastin { from { transform: translateY(.5rem); opacity: 0; } }
+
+/* --- Tooltip (jargon glosses) ------------------------------------------- */
+.tip { position: relative; border-bottom: 1px dotted var(--text-muted); cursor: help; }
+.tip::after {
+  content: attr(data-tip);
+  position: absolute; bottom: calc(100% + .375rem); left: 50%;
+  transform: translateX(-50%);
+  background: var(--black-900); color: var(--gray-050);
+  padding: .375rem .5rem; border-radius: var(--r-s);
+  font-size: var(--fs-xs); font-weight: 400; line-height: 1.4;
+  white-space: normal; width: max-content; max-width: 15rem;
+  opacity: 0; visibility: hidden; transition: opacity .12s ease;
+  box-shadow: var(--shadow-pop); z-index: 90; pointer-events: none;
+  text-transform: none; letter-spacing: normal;
+}
+.tip:hover::after, .tip:focus-visible::after { opacity: 1; visibility: visible; }
+
+/* --- Concept badge ------------------------------------------------------ */
+.concept {
+  display: inline-flex; align-items: center; gap: .375rem;
+  padding: .1875rem .5rem; border-radius: var(--r-pill);
+  border: 1px dashed var(--border-strong); color: var(--text-muted);
+  font-size: var(--fs-xs); font-weight: 600; letter-spacing: .01em;
+}
+.concept__dot {
+  width: .375rem; height: .375rem; border-radius: 50%; background: var(--accent);
+}
+
+.icon { width: 1rem; height: 1rem; flex: none; }
+
+/* --- Responsive --------------------------------------------------------- */
+@media (max-width: 900px) {
+  .app { grid-template-columns: 1fr; }
+  .rail {
+    position: static; height: auto; flex-direction: row; align-items: center;
+    gap: var(--s-m); border-right: 0; border-bottom: 1px solid var(--border);
+    overflow-x: auto; padding: var(--s-s) var(--s-m);
+  }
+  .rail .nav { flex-direction: row; }
+  .rail__foot, .nav__label, .brand__sub { display: none; }
+  .nav__item { padding: .375rem .5rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+}
+</style>
+
+<div class="app">
+  <aside class="rail">
+    <a class="brand" href="#/overview">
+      <span class="brand__mark" aria-hidden="true">M</span>
+      <span>
+        <span class="brand__name">Modaltrans</span>
+        <span class="brand__sub">Fleet Management</span>
+      </span>
+    </a>
+
+    <nav class="nav" id="nav" aria-label="Fleet sections">
+      <span class="nav__label">Fleet</span>
+      <!-- injected -->
+    </nav>
+
+    <div class="rail__foot">
+      <span class="concept" title="Unofficial concept. All data is fictional.">
+        <span class="concept__dot" aria-hidden="true"></span>Concept · Demo data
+      </span>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <h1 class="topbar__title" id="page-title">Overview</h1>
+      <div class="topbar__actions">
+        <button class="btn btn--sm" id="tour-btn" type="button">
+          <svg class="icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+            <path d="M5.5 3.5a.5.5 0 0 1 .77-.42l6 4.5a.5.5 0 0 1 0 .84l-6 4.5a.5.5 0 0 1-.8-.42z"/>
+          </svg>
+          Play story
+        </button>
+        <button class="btn btn--sm btn--icon" id="theme-btn" type="button"
+                aria-label="Switch colour theme"></button>
+      </div>
+    </header>
+
+    <main class="view" id="view" tabindex="-1"></main>
+  </div>
+</div>
+
+<div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+<div id="overlay"></div>
+
+<script>
+"use strict";
+/* ============================================================================
+   ICONS — Bootstrap Icons paths, matching the Modaltrans site's icon set
+   ========================================================================= */
+const ICON = {
+  gauge:  '<path d="M8 3a5 5 0 0 0-4.546 7.096.5.5 0 1 1-.908.418A6 6 0 1 1 14 8a6 6 0 0 1-.546 2.514.5.5 0 1 1-.908-.418A5 5 0 0 0 8 3m2.5 2.5-2 3.2a.9.9 0 1 0 1.1.7z"/>',
+  truck:  '<path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h7A1.5 1.5 0 0 1 10 3.5V5h1.02a1.5 1.5 0 0 1 1.17.563l1.481 1.85a1.5 1.5 0 0 1 .329.938V10.5a1.5 1.5 0 0 1-1.5 1.5H12a2 2 0 1 1-4 0H6a2 2 0 1 1-3.998-.085A1.5 1.5 0 0 1 0 10.5zM10 10.5a1 1 0 1 0 2 0 1 1 0 0 0-2 0m-6 0a1 1 0 1 0 2 0 1 1 0 0 0-2 0M10 6v3h3.5V7.351a.5.5 0 0 0-.11-.312L11.91 5.187A.5.5 0 0 0 11.52 5H10z"/>',
+  route:  '<path d="M4 2a2 2 0 1 1 .01 0zM4 3.5a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1M12 10a2 2 0 1 1 .01 0zm0 1.5a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1"/><path d="M4 5.5v2A1.5 1.5 0 0 0 5.5 9h5A1.5 1.5 0 0 1 12 10.5M4 5.5a.5.5 0 0 1 1 0v2a.5.5 0 0 0 .5.5h5a2.5 2.5 0 0 1 2.5 2.5.5.5 0 0 1-1 0A1.5 1.5 0 0 0 10.5 10h-5A2.5 2.5 0 0 1 3 7.5v-2a.5.5 0 0 1 1 0"/>',
+  person: '<path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664z"/>',
+  sun:    '<path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6m0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8M8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0m0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13m8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5M3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8m10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0m-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0m9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707M4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708"/>',
+  moon:   '<path d="M6 .278a.77.77 0 0 1 .08.858 7.2 7.2 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277q.792-.001 1.533-.16a.79.79 0 0 1 .81.316.73.73 0 0 1-.031.893A8.35 8.35 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.75.75 0 0 1 6 .278"/>',
+  search: '<path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.44.44.87.87l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.887-.854M12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>',
+  check:  '<path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425z"/>',
+  warn:   '<path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5m.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2"/>',
+  inbox:  '<path d="M4.98 4a.5.5 0 0 0-.39.188L1.54 8H6a.5.5 0 0 1 .5.5 1.5 1.5 0 1 0 3 0A.5.5 0 0 1 10 8h4.46l-3.05-3.812A.5.5 0 0 0 11.02 4zm9.954 5H10.45a2.5 2.5 0 0 1-4.9 0H1.066l.32 2.562a.5.5 0 0 0 .497.438h12.234a.5.5 0 0 0 .496-.438zM3.81 3.563A1.5 1.5 0 0 1 4.98 3h6.04a1.5 1.5 0 0 1 1.17.563l3.7 4.625a.5.5 0 0 1 .105.374l-.39 3.124A1.5 1.5 0 0 1 14.117 13H1.883a1.5 1.5 0 0 1-1.489-1.314l-.39-3.124a.5.5 0 0 1 .106-.374z"/>',
+};
+const svg = (name, cls = "icon") =>
+  `<svg class="${cls}" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">${ICON[name] || ""}</svg>`;
+
+/* ============================================================================
+   THEME — light / dark, remembered per browser
+   ========================================================================= */
+const Theme = {
+  get() { try { return localStorage.getItem("mt-theme"); } catch { return null; } },
+  set(v) { try { localStorage.setItem("mt-theme", v); } catch {} },
+  systemIsDark() { return matchMedia("(prefers-color-scheme: dark)").matches; },
+  current() { return document.documentElement.dataset.theme || (this.systemIsDark() ? "dark" : "light"); },
+  apply(v) {
+    document.documentElement.dataset.theme = v;
+    const btn = document.getElementById("theme-btn");
+    btn.innerHTML = svg(v === "dark" ? "sun" : "moon");
+    btn.setAttribute("aria-label", v === "dark" ? "Switch to light theme" : "Switch to dark theme");
+  },
+  toggle() { const next = this.current() === "dark" ? "light" : "dark"; this.set(next); this.apply(next); },
+  init() { this.apply(this.get() || (this.systemIsDark() ? "dark" : "light")); },
+};
+
+/* ============================================================================
+   TOASTS
+   ========================================================================= */
+function toast(message, { action, onAction, ms = 5000 } = {}) {
+  const host = document.getElementById("toasts");
+  const el = document.createElement("div");
+  el.className = "toast";
+  el.innerHTML = `<span class="u-grow">${message}</span>`;
+  if (action) {
+    const b = document.createElement("button");
+    b.className = "btn btn--sm btn--ghost";
+    b.style.color = "inherit";
+    b.textContent = action;
+    b.onclick = () => { onAction?.(); el.remove(); };
+    el.append(b);
+  }
+  host.append(el);
+  setTimeout(() => el.remove(), ms);
+  return el;
+}
+
+/* ============================================================================
+   ROUTER — hash based, restores scroll + focus per view
+   ========================================================================= */
+const ROUTES = [
+  { id: "overview", title: "Overview", icon: "gauge" },
+  { id: "vehicles", title: "Vehicles", icon: "truck" },
+  { id: "trips",    title: "Trips",    icon: "route" },
+  { id: "drivers",  title: "Drivers",  icon: "person" },
+];
+
+const views = {};                 // id -> render() => html string
+const scrollMemory = new Map();   // id -> scrollY
+
+function currentRoute() {
+  const id = location.hash.replace(/^#\/?/, "") || "overview";
+  return ROUTES.find(r => r.id === id) || ROUTES[0];
+}
+
+function renderNav() {
+  const active = currentRoute().id;
+  document.getElementById("nav").innerHTML =
+    `<span class="nav__label">Fleet</span>` +
+    ROUTES.map(r => `
+      <a class="nav__item" href="#/${r.id}" ${r.id === active ? 'aria-current="page"' : ""}>
+        ${svg(r.icon)}<span>${r.title}</span>
+      </a>`).join("");
+}
+
+/** Re-render the active view.
+ *  Full re-render loses focus and scroll, so both are restored:
+ *  any element carrying data-focus-id is refocused (with its caret preserved). */
+function render() {
+  const route = currentRoute();
+  const host = document.getElementById("view");
+
+  const activeId = document.activeElement?.dataset?.focusId;
+  const caret = activeId ? [document.activeElement.selectionStart, document.activeElement.selectionEnd] : null;
+
+  document.getElementById("page-title").textContent = route.title;
+  document.title = `${route.title} — Modaltrans Fleet`;
+  host.innerHTML = (views[route.id] || (() => ""))();
+  renderNav();
+
+  if (activeId) {
+    const el = host.querySelector(`[data-focus-id="${activeId}"]`);
+    if (el) {
+      el.focus();
+      if (caret && el.setSelectionRange) { try { el.setSelectionRange(caret[0], caret[1]); } catch {} }
+    }
+  }
+}
+
+function navigate() {
+  const id = currentRoute().id;
+  render();
+  window.scrollTo(0, scrollMemory.get(id) || 0);
+  document.getElementById("view").focus({ preventScroll: true });
+}
+
+addEventListener("hashchange", () => navigate());
+addEventListener("scroll", () => scrollMemory.set(currentRoute().id, window.scrollY), { passive: true });
+
+/* ============================================================================
+   VIEWS — placeholders until each phase fills them in
+   ========================================================================= */
+function placeholder(title, text) {
+  return `
+    <div class="card">
+      <div class="empty">
+        <span class="empty__icon">${svg("inbox")}</span>
+        <p class="empty__title">${title}</p>
+        <p class="empty__text">${text}</p>
+      </div>
+    </div>`;
+}
+
+views.overview = () => `
+  <div class="u-col" style="gap:var(--s-l)">
+    <div style="display:grid;gap:var(--s-m);grid-template-columns:repeat(auto-fit,minmax(11rem,1fr))">
+      ${[
+        ["Fleet utilization", "—", "Share of trucks earning today"],
+        ["Cost per km", "—", "All-in, across active trips"],
+        ["Needs attention", "—", "Before your customer calls"],
+        ["Active trips", "—", "On the road right now"],
+      ].map(([l, v, n]) => `
+        <div class="tile">
+          <span class="tile__label">${l}</span>
+          <span class="tile__value">${v}</span>
+          <span class="tile__note">${n}</span>
+        </div>`).join("")}
+    </div>
+    ${placeholder("Overview lands in Phase 4",
+      "The attention list, Genie insight and corridor map arrive once the data layer is in place.")}
+  </div>`;
+
+views.vehicles = () => placeholder("Vehicles lands in Phase 2",
+  "Own fleet and subcontracted trucks, searchable and filterable down to a single row.");
+
+views.trips = () => placeholder("Trips lands in Phase 6",
+  "Every trip as a six-leg chain: loading, TR customs, ferry, EU transit, UK border, delivery.");
+
+views.drivers = () => placeholder("Drivers lands in Phase 6",
+  "Driving hours, licences and tachograph download status for the whole roster.");
+
+/* ============================================================================
+   BOOT
+   ========================================================================= */
+document.getElementById("theme-btn").addEventListener("click", () => Theme.toggle());
+document.getElementById("tour-btn").addEventListener("click", () =>
+  toast("The guided story arrives in Phase 8."));
+
+Theme.init();
+navigate();
+</script>
