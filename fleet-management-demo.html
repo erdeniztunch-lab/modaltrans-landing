@@ -956,6 +956,25 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
 table.data tbody tr.is-idle { cursor: default; }
 table.data tbody tr.is-idle:hover { background: transparent; }
 
+
+/* ============================================================================
+   CORRIDOR MAP
+   ========================================================================= */
+.map { position: relative; height: 300px; background: var(--gradient-map); overflow: hidden; }
+.mapsvg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.mapsvg text { font-family: var(--font); font-weight: var(--w-label); }
+.mapgrid { opacity: .6; }
+
+.pin { transition: left 900ms linear, top 900ms linear; }
+.cluster { transition: left 900ms linear, top 900ms linear; }
+@media (prefers-reduced-motion: reduce) { .pin, .cluster { transition: none; } }
+
+.legend__dash {
+  width: 12px !important; height: 0 !important; border-radius: 0 !important;
+  border-top: 1.5px dashed var(--border-strong);
+}
+@media (max-width: 720px) { .map { height: 220px; } .mapsvg text { display: none; } }
+
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
@@ -984,6 +1003,7 @@ table.data tbody tr.is-idle:hover { background: transparent; }
   <symbol id="i-sun" viewBox="0 0 16 16"><circle cx="8" cy="8" r="3.2"/><line x1="8" y1="1" x2="8" y2="2.6"/><line x1="8" y1="13.4" x2="8" y2="15"/><line x1="1" y1="8" x2="2.6" y2="8"/><line x1="13.4" y1="8" x2="15" y2="8"/><line x1="3.3" y1="3.3" x2="4.4" y2="4.4"/><line x1="11.6" y1="11.6" x2="12.7" y2="12.7"/><line x1="3.3" y1="12.7" x2="4.4" y2="11.6"/><line x1="11.6" y1="4.4" x2="12.7" y2="3.3"/></symbol>
   <symbol id="i-moon" viewBox="0 0 16 16"><path d="M13.2 9.6A5.8 5.8 0 0 1 6.4 2.8a5.8 5.8 0 1 0 6.8 6.8"/></symbol>
   <symbol id="i-rows" viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="4" rx="1"/><rect x="2" y="9" width="12" height="4" rx="1"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 16 16"><line x1="6" y1="3.5" x2="6" y2="12.5"/><line x1="10" y1="3.5" x2="10" y2="12.5"/></symbol>
   <symbol id="i-plus" viewBox="0 0 16 16"><line x1="8" y1="3.4" x2="8" y2="12.6"/><line x1="3.4" y1="8" x2="12.6" y2="8"/></symbol>
   <symbol id="i-inbox" viewBox="0 0 16 16"><path d="M2 9.4 3.6 3.2h8.8L14 9.4v3.4H2z"/><path d="M2 9.4h3.4a2.6 2.6 0 0 0 5.2 0H14"/></symbol>
 </defs></svg>
@@ -1485,6 +1505,10 @@ const Store = {
     return label;
   },
 
+  /** Simulation path: mutate without touching the undo history. If the ticker
+      went through commit(), twenty seconds would bury the user's own Undo. */
+  tick(fn) { fn(this.state); },
+
   undo() {
     const h = this.history.pop();
     if (!h) return null;
@@ -1567,9 +1591,9 @@ const A = {
     });
   },
 
-  /** Phase 7 will call this on a timer; it already works. */
+  /** Runs on the ticker, so it deliberately stays out of the undo history. */
   advanceSimulation() {
-    return Store.commit("Advance", st => {
+    Store.tick(st => {
       st.vehicles.filter(v => v.status === "on_trip").forEach(v => { v.km += 40 + Math.floor(rnd() * 90); });
     });
   },
@@ -1849,6 +1873,252 @@ addEventListener("scroll", () => scrollMemory.set(currentRoute().id, window.scro
 Store.subscribe(render);
 
 /* ============================================================================
+   CORRIDOR GEOGRAPHY
+   Cities are placed by real longitude and latitude, projected into a 100 x 60
+   box. The map is schematic on purpose — a transit diagram of the corridors
+   Modaltrans actually serves, not an attempt at a world map.
+       x = (lon + 4) * 2.5      y = (54 - lat) * 3.158
+   ========================================================================= */
+const CITY = {
+  Manchester: [4.5, 1.6],   Birmingham: [5.3, 4.7],   Dover: [13.3, 9.2],
+  Calais: [14.8, 9.8],      Antwerp: [21.0, 8.8],     Rotterdam: [21.3, 6.6],
+  Duisburg: [27.0, 8.2],    Lyon: [22.0, 25.9],       "München": [39.0, 18.6],
+  Trieste: [44.5, 26.2],    Belgrade: [61.3, 29.1],   Sofia: [68.3, 35.7],
+  "Köstence": [81.5, 31.0], "Kapıkule": [76.5, 38.8], "İstanbul": [82.5, 41.1],
+  "Ambarlı": [81.8, 41.1],  Gebze: [83.5, 41.7],      Bursa: [82.8, 43.6],
+  "İzmir": [77.8, 49.3],    Mersin: [96.5, 54.3],
+};
+
+/* Each corridor is a chain of waypoints. `sea` marks the legs that ride a
+   ferry rather than tarmac — they draw dashed. */
+const CORRIDOR_ROUTES = {
+  "TR → UK": { via: ["İstanbul", "Kapıkule", "Belgrade", "München", "Calais", "Dover", "Manchester"], sea: [[4, 5]] },
+  "TR → NL": { via: ["Ambarlı", "Kapıkule", "Belgrade", "München", "Rotterdam"], sea: [] },
+  "TR → DE": { via: ["İzmir", "Kapıkule", "Sofia", "München", "Duisburg"], sea: [] },
+  "TR → IT": { via: ["Mersin", "Trieste"], sea: [[0, 1]] },
+  "TR → FR": { via: ["Bursa", "Kapıkule", "Belgrade", "Lyon", "Calais"], sea: [] },
+  "TR → RO": { via: ["Gebze", "Köstence", "Sofia"], sea: [] },
+  "TR → TR": { via: ["İstanbul", "Bursa", "İzmir"], sea: [] },
+};
+
+/** Cumulative lengths so a fraction of the trip maps to a fraction of the road. */
+function routeGeometry(corridor) {
+  const r = CORRIDOR_ROUTES[corridor] || CORRIDOR_ROUTES["TR → DE"];
+  const pts = r.via.map(c => CITY[c] || [50, 30]);
+  const seg = [], acc = [0];
+  for (let i = 1; i < pts.length; i++) {
+    const d = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+    seg.push(d); acc.push(acc[i - 1] + d);
+  }
+  return { pts, seg, acc, total: acc[acc.length - 1], sea: r.sea };
+}
+const ROUTE_CACHE = {};
+const geoFor = corridor => (ROUTE_CACHE[corridor] || (ROUTE_CACHE[corridor] = routeGeometry(corridor)));
+
+/** How far along its corridor a trip has got, 0 to 1. */
+function tripFraction(trip) {
+  const base = (trip.progress ?? 0) / 5;
+  return Math.max(0, Math.min(1, base * 0.92 + (trip.drift || 0)));
+}
+
+function pointAt(corridor, frac) {
+  const g = geoFor(corridor);
+  const want = Math.max(0, Math.min(1, frac)) * g.total;
+  for (let i = 1; i < g.acc.length; i++) {
+    if (want <= g.acc[i] || i === g.acc.length - 1) {
+      const t = g.seg[i - 1] ? (want - g.acc[i - 1]) / g.seg[i - 1] : 0;
+      const a = g.pts[i - 1], b = g.pts[i];
+      return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+    }
+  }
+  return g.pts[g.pts.length - 1];
+}
+const tripPosition = trip => pointAt(trip.corridor, tripFraction(trip));
+
+/** Delayed and blocked runs always stand alone; the rest collapse into counts. */
+function mapMarkers() {
+  const live = S.trips().filter(t => t.status === "active" && t.vehicleId);
+  const solo = [], rest = [];
+  live.forEach(t => {
+    const v = S.all().find(x => x.id === t.vehicleId);
+    if (!v) return;
+    const entry = { trip: t, vehicle: v, at: tripPosition(t) };
+    (t.delayed || blockersFor(t) > 0 ? solo : rest).push(entry);
+  });
+
+  const CELL = 9;
+  const cells = {};
+  rest.forEach(e => {
+    const k = Math.round(e.at[0] / CELL) + ":" + Math.round(e.at[1] / CELL);
+    (cells[k] || (cells[k] = [])).push(e);
+  });
+
+  const singles = [...solo], clusters = [];
+  Object.values(cells).forEach(group => {
+    if (group.length < 3) singles.push(...group);
+    else clusters.push({
+      at: [group.reduce((s, e) => s + e.at[0], 0) / group.length,
+           group.reduce((s, e) => s + e.at[1], 0) / group.length],
+      members: group,
+    });
+  });
+  return { singles, clusters, total: live.length };
+}
+
+/* ============================================================================
+   MAP PANEL + LIVE SIMULATION
+   ========================================================================= */
+const LABELLED = ["Manchester", "Dover", "Rotterdam", "Duisburg", "Lyon", "München",
+                  "Trieste", "Belgrade", "Sofia", "Köstence", "İstanbul", "Mersin"];
+
+function mapSvg() {
+  const used = new Set(S.trips().filter(t => t.status === "active").map(t => t.corridor));
+
+  const grid = [];
+  for (let x = 10; x < 100; x += 15) grid.push(`<line x1="${x}" y1="0" x2="${x}" y2="60"/>`);
+  for (let y = 10; y < 60; y += 12) grid.push(`<line x1="0" y1="${y}" x2="100" y2="${y}"/>`);
+
+  const roads = Object.keys(CORRIDOR_ROUTES).map(c => {
+    const g = geoFor(c);
+    const live = used.has(c);
+    return g.pts.slice(1).map((p, i) => {
+      const a = g.pts[i];
+      const isSea = g.sea.some(([s, e]) => s === i && e === i + 1);
+      return `<line x1="${a[0]}" y1="${a[1]}" x2="${p[0]}" y2="${p[1]}"
+        stroke="var(--border-strong)" stroke-width="${live ? 0.7 : 0.4}"
+        stroke-linecap="round" opacity="${live ? 0.95 : 0.45}"
+        ${isSea ? 'stroke-dasharray="1.6 1.4"' : ""}/>`;
+    }).join("");
+  }).join("");
+
+  const dots = Object.entries(CITY).map(([name, [x, y]]) => `
+    <circle cx="${x}" cy="${y}" r="${LABELLED.includes(name) ? 0.9 : 0.6}"
+            fill="var(--surface)" stroke="var(--border-strong)" stroke-width="0.35"/>
+    ${LABELLED.includes(name)
+      ? `<text x="${x + 1.6}" y="${y + 1}" font-size="2.1" fill="var(--text-muted)">${name}</text>`
+      : ""}`).join("");
+
+  return `<svg class="mapsvg" viewBox="0 0 100 60" preserveAspectRatio="xMidYMid meet"
+               role="img" aria-label="Corridor map from Türkiye to Europe and the UK">
+    <g class="mapgrid" stroke="var(--border)" stroke-width="0.2">${grid.join("")}</g>
+    <g>${roads}</g>
+    <g>${dots}</g>
+  </svg>`;
+}
+
+function mapMarkersHtml() {
+  const { singles, clusters } = mapMarkers();
+  const pin = e => {
+    const t = e.trip, v = e.vehicle;
+    const cls = t.delayed ? "pin--bad" : blockersFor(t) > 0 ? "pin--sel" : "pin--info";
+    const why = t.delayed ? " — running late" : blockersFor(t) > 0 ? " — blocked" : " — on trip";
+    return `<button class="pin ${cls}" data-pin="${t.ref}" data-vehicle="${v.id}"
+      style="left:${e.at[0]}%;top:${e.at[1] / 60 * 100}%"
+      aria-label="${esc(v.plate)}, ${esc(t.origin)} to ${esc(t.destination)}${why}">
+      ${ico(t.delayed ? "alert" : "truck")}</button>`;
+  };
+  const cluster = c => `<button class="cluster" data-cluster="${c.members.length}"
+      style="left:${c.at[0]}%;top:${c.at[1] / 60 * 100}%"
+      aria-label="${c.members.length} trucks in this area">${c.members.length}</button>`;
+  return singles.map(pin).join("") + clusters.map(cluster).join("");
+}
+
+function mapPanel(storyTrip) {
+  const late = S.delayedTrips().length;
+  return `
+  <section class="card" style="overflow:hidden">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--sp-4);padding:12px 16px;border-bottom:1px solid var(--border)">
+      <span class="card__title">Corridors</span>
+      <span class="u-xs u-muted tnum">${S.activeTrips().length} on the road · ${late} late</span>
+      <button class="btn btn--ghost btn--sm btn--icon" type="button" data-sim
+              aria-label="${Sim.running ? "Pause live tracking" : "Resume live tracking"}">
+        ${ico(Sim.running ? "pause" : "play", "ico ico--sm")}</button>
+    </div>
+    <div class="map" id="map">${mapSvg()}${mapMarkersHtml()}</div>
+    <div class="legend">
+      <span><i style="background:var(--info-fg)"></i>On trip</span>
+      <span><i style="background:var(--accent)"></i>Blocked</span>
+      <span><i style="background:var(--bad-fg)"></i>Running late</span>
+      <span><i class="legend__dash"></i>Ferry leg</span>
+    </div>
+    <div style="padding:12px 16px;border-top:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;gap:var(--sp-4);flex-wrap:wrap">
+        <span class="u-sm u-strong">${esc(storyTrip.ref)} · ${esc(storyTrip.origin)} → ${esc(storyTrip.destination)}</span>
+        <span class="u-xs u-muted">ETA ${storyTrip.eta} · ${blockersFor(storyTrip)} blocker${blockersFor(storyTrip) === 1 ? "" : "s"}</span>
+      </div>
+    </div>
+    <div class="chain">${chainFor(storyTrip).map(([name, state, icn, meta, tone], i) => `
+      <div class="chain__step">
+        <span class="chain__line" style="${i === 0 ? "left:50%;right:0" : i === 5 ? "left:0;right:50%" : "left:0;right:0"};
+          background:${state === "done" || state === "current" ? "var(--ok-fg)" : "var(--border-strong)"}"></span>
+        <span class="chain__node chain__node--${state}">${ico(icn, "ico ico--sm")}</span>
+        <span class="chain__name">${name}</span>
+        <span class="chain__meta${tone ? " chain__meta--" + tone : ""}">${meta}</span>
+      </div>`).join("")}</div>
+  </section>`;
+}
+
+/* ----------------------------------------------------------------------------
+   The ticker. Two things it must not do: flood the undo history, and repaint
+   the whole app every second. So it mutates through Store.tick (no snapshot)
+   and moves the pins directly in the DOM. A full render happens only when
+   something discrete actually happens.
+   -------------------------------------------------------------------------- */
+const Sim = {
+  timer: null, running: false, seconds: 0, fired: false,
+  reduced: () => matchMedia("(prefers-reduced-motion: reduce)").matches,
+
+  start() {
+    if (this.timer || this.reduced()) return;
+    this.running = true;
+    this.timer = setInterval(() => this.step(), 1000);
+  },
+  stop() { clearInterval(this.timer); this.timer = null; this.running = false; },
+  toggle() { this.running ? (this.stop(), Store.emit()) : (this.start(), Store.emit()); },
+
+  step() {
+    this.seconds++;
+    Store.tick(st => {
+      st.trips.forEach(t => {
+        if (t.status !== "active") return;
+        t.drift = Math.min(0.08, (t.drift || 0) + 0.0016 + rnd() * 0.0012);
+      });
+    });
+    this.paint();
+    if (this.seconds === 20 && !this.fired) this.fireDelay();
+  },
+
+  /** Move the pins where they now are, without rebuilding the view. */
+  paint() {
+    const host = document.getElementById("map");
+    if (!host) return;
+    host.querySelectorAll("[data-pin]").forEach(el => {
+      const t = S.tripByRef(el.dataset.pin);
+      if (!t) return;
+      const [x, y] = tripPosition(t);
+      el.style.left = x + "%";
+      el.style.top = (y / 60 * 100) + "%";
+    });
+  },
+
+  /** One discrete event: a run slips. This one does re-render. */
+  fireDelay() {
+    this.fired = true;
+    const victim = S.trips().find(t => t.status === "active" && !t.delayed && t.corridor === "TR → UK")
+                || S.trips().find(t => t.status === "active" && !t.delayed);
+    if (!victim) return;
+    Store.tick(st => {
+      const t = st.trips.find(x => x.ref === victim.ref);
+      if (!t) return;
+      t.delayed = true;
+      t.delayReason = "Ferry at Calais pushed back 9h";
+    });
+    Store.emit();
+    toast(`${victim.ref} is now running late — ferry at Calais pushed back 9h.`);
+  },
+};
+
+/* ============================================================================
    VIEW · OVERVIEW
    ========================================================================= */
 const today = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
@@ -1937,39 +2207,7 @@ views.overview = () => {
         </section>
       </div>
 
-      <section class="card" style="overflow:hidden">
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)">
-          <span class="card__title">Corridors</span>
-          <span class="u-xs u-muted">${S.by("on_trip")} on the road</span>
-        </div>
-        <div class="map">
-          ${(() => {
-            const onTrip = S.all().find(v => v.status === "on_trip");
-            const bad = S.all().find(v => v.docs.state === "expired") || onTrip;
-            const ok = S.all().find(v => v.status === "available") || onTrip;
-            const pin = (cls, v, label, icon, pos) => v ? `<button class="pin ${cls}" style="${pos}"
-              data-vehicle="${v.id}" aria-label="${label}: ${esc(v.plate)}">${ico(icon)}</button>` : "";
-            return pin("pin--info", onTrip, "On trip", "truck", "left:18%;top:30%")
-                 + pin("pin--sel", S.all().find(v => v.id === storyTrip.vehicleId), "Selected trip " + storyTrip.ref, "truck", "left:44%;top:20%")
-                 + pin("pin--bad", bad, "Blocked", "alert", "left:68%;top:46%")
-                 + `<span class="cluster" style="left:30%;top:60%">12</span>`
-                 + pin("pin--ok", ok, "Delivered", "check-circle", "left:56%;top:66%");
-          })()}
-        </div>
-        <div class="legend">
-          <span><i style="background:var(--info-fg)"></i>On trip</span>
-          <span><i style="background:var(--ok-fg)"></i>Delivered</span>
-          <span><i style="background:var(--bad-fg)"></i>Blocked</span>
-          <span><i style="background:var(--accent)"></i>Selected</span>
-        </div>
-        <div style="padding:12px 16px;border-top:1px solid var(--border)">
-          <div style="display:flex;justify-content:space-between;gap:var(--sp-4)">
-            <span class="u-sm u-strong">TR-4471 · İstanbul → Manchester</span>
-            <span class="u-xs u-muted">ETA ${storyTrip.eta} · ${blockersFor(storyTrip)} blocker${blockersFor(storyTrip) === 1 ? "" : "s"}</span>
-          </div>
-        </div>
-        <div class="chain">${chain}</div>
-      </section>
+      ${mapPanel(storyTrip)}
     </div>
   </div>`;
 };
@@ -2640,6 +2878,10 @@ document.addEventListener("click", e => {
   if (hit("#theme-btn")) return Prefs.toggleTheme();
   if (hit("#density-btn")) return Prefs.toggleDensity();
   if (hit("#tour-btn")) return toast("The guided story arrives in Phase 8.");
+  if (hit("[data-sim]")) return Sim.toggle();
+
+  const clu = hit("[data-cluster]");
+  if (clu) { Store.state.ui.tripTab = "active"; location.hash = "#/trips"; return; }
 
   /* --- drawer --------------------------------------------------------- */
   if (hit("[data-drawer-close]")) return closeDrawer();
@@ -2813,4 +3055,11 @@ window.MT = { Store, S, A, T_STATUS, T_MAINT, T_DOCS };
 
 Prefs.init();
 navigate();
+
+/* Live tracking: off when the reader asked for less motion, paused when the
+   tab is in the background. */
+if (!Sim.reduced()) Sim.start();
+document.addEventListener("visibilitychange", () => {
+  document.visibilityState === "hidden" ? Sim.stop() : (Sim.reduced() || Sim.start());
+});
 </script>
