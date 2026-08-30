@@ -1375,19 +1375,25 @@ function buildTrips(vehicles, drivers) {
   const onTrip = vehicles.filter(v => v.status === "on_trip");
   let n = 4600;
 
-  /* three runs that are late, each for a reason a dispatcher would recognise */
-  DELAYS.forEach((reason, i) => {
-    const v = onTrip[i + 1];
-    const [from, to, corridor, km] = ROUTE_POOL[i];
+  /* Every truck marked "on trip" gets exactly one live trip. Anything less and
+     the Overview claims 28 on the road while Trips shows a handful. */
+  const taken = new Set(list.filter(t => t.status === "active").map(t => t.vehicleId));
+  const needsTrip = onTrip.filter(v => !taken.has(v.id));
+
+  needsTrip.forEach((v, i) => {
+    const late = i < DELAYS.length;
+    const [from, to, corridor, km] = ROUTE_POOL[i % ROUTE_POOL.length];
+    const weightT = 16 + Math.floor(rnd() * 10);
     list.push({
-      ref: "TR-" + (n += 7), status: "active", delayed: true, delayReason: reason,
+      ref: "TR-" + (n += 7), status: "active",
+      delayed: late, delayReason: late ? DELAYS[i] : null,
       vehicleId: v.id, driverId: driverOf(v.id),
       origin: from, destination: to, corridor, distanceKm: km,
-      legMin: 240 + Math.floor(rnd() * 200), adr: false,
-      body: ["reefer", "tautliner", "mega"][i], weightT: 18 + Math.floor(rnd() * 8),
-      pickup: dateIn(-(3 + i)).slice(0, 6), eta: dateIn(1 + i).slice(0, 6),
-      progress: 2 + (i % 3),
-      declarations: i === 0
+      legMin: 240 + Math.floor(rnd() * 200), adr: rnd() < 0.15,
+      body: ["reefer", "tautliner", "mega", "box"][i % 4], weightT,
+      pickup: dateIn(-(1 + (i % 5))).slice(0, 6), eta: dateIn(1 + (i % 7)).slice(0, 6),
+      progress: 1 + Math.floor(rnd() * 4),
+      declarations: late && i === 0
         ? { ...declarationsFor(corridor, false), gvms: "missing" }
         : declarationsFor(corridor, false),
       cost: null, co2eKg: null,
@@ -1460,7 +1466,7 @@ const Store = {
       trips: buildTrips(vehicles, drivers),
       ui: { scope: "own", tab: "all", q: "", corridor: null, docFilter: null, selected: null, page: 0,
             assign: { tripRef: null, vehicleId: null, driverId: null, showAll: false, done: null },
-            drawer: { vehicleId: null, tab: "overview", returnTo: null }, tripTab: "active" },
+            drawer: { vehicleId: null, tab: "overview", returnTo: null }, tripTab: "active", maintFilter: null },
     };
     return this;
   },
@@ -1614,6 +1620,7 @@ const S = {
     else if (u.tab !== "all") list = list.filter(v => v.status === u.tab);
     if (u.corridor) list = list.filter(v => v.corridor === u.corridor);
     if (u.docFilter === "expiring") list = list.filter(v => v.docs.state === "expiring" || v.docs.state === "expired");
+    if (u.maintFilter === "due") list = list.filter(v => v.maint.state === "overdue" || v.maint.state === "due");
     if (u.q.trim()) {
       const q = u.q.trim().toLowerCase();
       list = list.filter(v => (v.plate + " " + (v.driver || "") + " " + v.model + " " + (v.carrier || "")).toLowerCase().includes(q));
@@ -1636,6 +1643,8 @@ const S = {
   /** Exactly the rows the Documents rail item opens onto — badge and table agree. */
   docsNeedingWork: (scope = "own") => S.all().filter(v =>
     v.ownership === scope && (v.docs.state === "expiring" || v.docs.state === "expired")).length,
+  maintNeedingWork: (scope = "own") => S.all().filter(v =>
+    v.ownership === scope && (v.maint.state === "overdue" || v.maint.state === "due")).length,
 
   /** Fleet-wide all-in cost. The EU average for a heavy truck is ~€1.42/km. */
   costPerKm: () => (S.all().reduce((sum, v) => sum + v.costPerKm, 0) / S.all().length).toFixed(2),
@@ -1786,7 +1795,7 @@ const ROUTES = [
   { id: "trips",       title: "Trips",       icon: "route",    badge: () => S.unassignedTrips().length },
   { id: "drivers",     title: "Drivers",     icon: "person" },
   { id: "documents",   title: "Documents",   icon: "file",     badge: () => S.docsNeedingWork(), bad: true },
-  { id: "maintenance", title: "Maintenance", icon: "tools",    badge: () => S.maintOverdue(), bad: true },
+  { id: "maintenance", title: "Maintenance", icon: "tools",    badge: () => S.maintNeedingWork(), bad: true },
   /* A flow, not a section — reachable from Overview and Vehicles, not the rail. */
   { id: "assign", title: "Assign a leg", icon: "route", hidden: true },
 ];
@@ -1989,6 +1998,7 @@ views.vehicles = () => {
     u.q.trim() && ["q", `Search: ${u.q.trim()}`],
     u.corridor && ["corridor", `Corridor: ${u.corridor}`],
     u.docFilter && ["docFilter", "Docs: expiring"],
+    u.maintFilter && ["maintFilter", "Service: due"],
   ].filter(Boolean);
 
   const body = rows.length ? `
@@ -2274,8 +2284,8 @@ views.drivers = () => {
 /* Documents and Maintenance are the vehicle table under a preset filter,
    not separate screens — the design lists them in the rail, the data is the same. */
 const PRESETS = {
-  documents:   { scope: "own", tab: "all",       q: "", corridor: null, docFilter: "expiring" },
-  maintenance: { scope: "own", tab: "attention", q: "", corridor: null, docFilter: null },
+  documents:   { scope: "own", tab: "all",       q: "", corridor: null, docFilter: "expiring", maintFilter: null },
+  maintenance: { scope: "own", tab: "all", q: "", corridor: null, docFilter: null, maintFilter: "due" },
 };
 views.documents = () => views.vehicles();
 views.maintenance = () => views.vehicles();
