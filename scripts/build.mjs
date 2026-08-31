@@ -6,7 +6,7 @@ import { wrap } from "./wrap.mjs";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = join(root, "public");
 
-const demoSrc = await readFile(join(root, "fleet-management-demo.html"), "utf8");
+let demoSrc = await readFile(join(root, "fleet-management-demo.html"), "utf8");
 let landingSrc = await readFile(join(root, "landing.html"), "utf8");
 
 /* Fail loudly rather than shipping a page with a placeholder in it. */
@@ -29,6 +29,16 @@ landingSrc = landingSrc.replace(
 const after = (landingSrc.match(/https:\/\/claude\.ai\/code\/artifact\/[0-9a-f-]+/g) || []).length;
 if (before === 0) throw new Error("No demo link found on the landing page.");
 if (after !== 0) throw new Error(`${after} demo link(s) still point at an artifact URL.`);
+
+/* And the same in the other direction: the demo's way back to the landing. */
+const backBefore = (demoSrc.match(/data-landing-link/g) || []).length;
+demoSrc = demoSrc.replace(
+  /(<a[^>]*\bdata-landing-link\b[^>]*\bhref=")https:\/\/claude\.ai\/code\/artifact\/[0-9a-f-]+(")/g,
+  "$1/$2"
+);
+const backAfter = (demoSrc.match(/https:\/\/claude\.ai\/code\/artifact\/[0-9a-f-]+/g) || []).length;
+if (backBefore === 0) throw new Error("The demo has no way back to the landing page.");
+if (backAfter !== 0) throw new Error(`${backAfter} link(s) in the demo still point at an artifact URL.`);
 
 await rm(OUT, { recursive: true, force: true });
 await mkdir(join(OUT, "demo"), { recursive: true });

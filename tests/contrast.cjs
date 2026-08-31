@@ -72,6 +72,9 @@ const PAIRS = [
   ["--neutral-fg", "--neutral-bg", 4.5],
   ["--control-border", "--surface", 3], ["--border-strong", "--surface", 1.2], ["--border", "--surface", 1.2],
   ["--on-surface-inverse", "--surface-inverse", 4.5],
+  /* City names sit on the land fill, and the coast has to read against the sea. */
+  ["--text-2", "--map-land", 4.5], ["--map-coast", "--map-sea", 1.2],
+  ["--border-strong", "--map-land", 1.2],
 ];
 
 let fails = 0, checks = 0;

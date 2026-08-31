@@ -48,9 +48,13 @@ const server = createServer(async (req, res) => {
       } else {
         const fragment = wantsDemo ? await readFile(DEMO, "utf8") : await landingFragment();
         html = wrap(fragment, { dev: true, colorScheme: wantsDemo ? "light dark" : "light" });
-        /* the artifact URL only makes sense once published */
-        if (!wantsDemo) html = html.replace(
-          /(<a[^>]*\bdata-demo-link\b[^>]*\bhref=")https:\/\/claude\.ai\/code\/artifact\/[0-9a-f-]+(")/g, "$1/demo/$2");
+        /* the artifact URLs only make sense once published; on the web the two
+           pages are siblings, so each one's link to the other is rewritten */
+        html = wantsDemo
+          ? html.replace(
+              /(<a[^>]*\bdata-landing-link\b[^>]*\bhref=")https:\/\/claude\.ai\/code\/artifact\/[0-9a-f-]+(")/g, "$1/$2")
+          : html.replace(
+              /(<a[^>]*\bdata-demo-link\b[^>]*\bhref=")https:\/\/claude\.ai\/code\/artifact\/[0-9a-f-]+(")/g, "$1/demo/$2");
       }
       res.writeHead(200, { "content-type": MIME[".html"], "cache-control": "no-store" });
       return res.end(html);

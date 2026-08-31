@@ -65,8 +65,8 @@ UNBUILT.forEach(term =>
    disclosure. If any of them is edited away, the page starts reading as a
    shipped Modaltrans module. */
 ck("the header calls it a concept build", /class="chip">Concept build</.test(LANDING));
-ck("the footer repeats it", /Concept build · figures from a 42 vehicle demo fleet/.test(LANDING));
-ck("the closing block says nothing is stored", /Nothing is saved and nothing is sent/.test(LANDING));
+ck("the footer repeats it, and says nothing is stored",
+  /Concept build · figures from a 42 vehicle demo fleet · nothing is saved or sent/.test(LANDING));
 ck("it is never called a launch", !/early launch|now available|generally available/i.test(LANDING));
 
 console.log("\n== the seven checks ==");
@@ -124,10 +124,13 @@ console.log("\n== the six records of one confirmation ==");
 const cost = A.estimateCost(veh, trip);
 says("estimated cost", "€" + nfmt(cost.total));
 says("CO2e", nfmt(A.estimateCo2(trip)) + " kg CO₂e");
+/* The six records are shown once, in the confirmed panel. They used to be
+   repeated as a section of their own, which said nothing new. */
 ck("six records are drawn", (LANDING.match(/class="rec"/g) || []).length === 6);
-ck("six records are listed again as rows", (LANDING.match(/class="recrow"/g) || []).length === 6);
+ck("they are drawn once, not twice", (LANDING.match(/Available becomes On trip/g) || []).length === 1);
 ck("undo is offered, because the app has undo",
-  /Undo available/.test(LANDING) && /undone/.test(LANDING) && /Store\.undo|undo\(\)/.test(demoJs));
+  /can be undone/.test(LANDING) && /every one of\s+them can be undone/.test(LANDING) &&
+  /Store\.undo|undo\(\)/.test(demoJs));
 
 console.log("\n== the morning list matches the app's own signals ==");
 const attention = S.attention();
@@ -158,53 +161,63 @@ const decls = S.tripByRef(ROLLING).declarations;
   ck("  declaration " + k + " is tracked", k in decls, decls[k]));
 ["U-ETDS", "NCTS", "ENS", "GVMS"].forEach(d => says("  page names " + d, ">" + d + "<"));
 ck("the ferry really is Calais to Dover",
-  /"TR → UK":\s*\{\s*via:\s*\[[^\]]*"Calais",\s*"Dover"/.test(demoJs) && /Calais/.test(LANDING));
+  /"TR → UK":[\s\S]{0,220}?sea:\s*\[\["Calais",\s*"Dover"\]\]/.test(demoJs) && /Calais/.test(LANDING));
 
-console.log("\n== the ownership table is the app's own ranking ==");
+console.log("\n== own and subcontracted go through one gate ==");
 says("own count", S.scopeCount("own") + " own");
 says("subcontracted count", S.scopeCount("subcontracted") + " subcontracted");
-const shown = [...LANDING.matchAll(/class="trow__p">([^<]+)</g)].map(m => m[1]);
-ck("five vehicles are listed", shown.length === 5);
-shown.forEach(plate => {
-  const r = rank.find(x => x.vehicle.plate === plate);
-  if (!ck("  " + plate + " is in the ranking", !!r)) return;
-  const d = S.driverFor(r.vehicle);
-  const hours = d ? hm(d.minutesLeft) : "No driver";
-  ck("    hours left " + hours, LANDING.includes(">" + hours + "<"));
-  ck("    readiness " + r.score, LANDING.includes(">" + r.score + "</span>"));
-  const own = r.vehicle.ownership === "own" ? "Own" : "Subcontracted";
-  ck("    ownership " + own, LANDING.includes(">" + own + "<"));
-});
-ck("the rows stay in the app's order",
-  shown.every((p, i) => i === 0 ||
-    rank.findIndex(x => x.vehicle.plate === p) > rank.findIndex(x => x.vehicle.plate === shown[i - 1])));
-ck("telemetry sources are the real three",
-  ["Arvento", "Mobiliz", "Motive"].every(s => demoJs.includes(s) && LANDING.includes(s)));
+ck("the gate does not distinguish them",
+  /no difference between them/.test(LANDING) &&
+  !/ownership/i.test(demoJs.match(/compliance\(v, d, trip\) \{[\s\S]*?return out;/)[0]));
 
-console.log("\n== where the module sits ==");
-["Freight Management", "Customs Management", "Finance Management"].forEach(m =>
-  ck("  " + m + " is a real Modaltrans module", KNOWLEDGE.includes(m) && LANDING.includes(m)));
-ck("Fleet Management is marked as the new one", /mod--this/.test(LANDING));
+console.log("\n== the page is short enough to be read ==");
+/* Four screens: the gate, the same gate cleared, the morning list, the
+   corridor. Nothing that repeats what another one already showed. */
+const sections = (LANDING.match(/^  <section/gm) || []).length;
+ck("four sections", sections === 4, sections + " found");
+const h2s = (LANDING.match(/<h2>/g) || []).length;
+ck("one h1 and three h2s", h2s === 3, h2s + " found");
+ck("no numbered chapters", !/(One|Two|Three|Four) · /.test(LANDING));
+/* Prose is allowed; walls of it are not. */
+const paras = [...LANDING.matchAll(/<p class="(?:sub|lead|gate)"[^>]*>([\s\S]*?)<\/p>/g)]
+  .map(m => m[1]
+    .replace(/<span class="gatename">[\s\S]*?<\/span>/g, "")  /* chips are furniture, not prose */
+    .replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim());
+const longest = paras.reduce((a, b) => (b.length > a.length ? b : a), "");
+ck("no paragraph runs past 220 characters", longest.length <= 220,
+  longest.length + " chars: " + longest.slice(0, 48) + "…");
 
 console.log("\n== headline figures ==");
 says("fleet size", ">42<");
 says("utilisation", S.utilisation() + "%");
-says("cost per km", "€" + S.costPerKm());
 says("documents expiring", ">" + S.docsExpiring() + "<");
 
 console.log("\n== controls name what they open ==");
 const VAGUE = ["get started", "learn more", "sign up", "try it", "submit", "apply", "continue", "go", "click here"];
 const ctas = [...LANDING.matchAll(/<a\b[^>]*class="[^"]*\bbtn\b[^"]*"[^>]*>([\s\S]*?)<\/a>/g)]
   .map(m => m[1].replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim());
-/* One call to action at the top of the page and one at the bottom, both
-   naming the same destination. A third would be noise. */
+/* One in the hero, one at the end of the scroll, both opening the same thing.
+   The closing one is a strip, not a section, so it does not read as a chapter. */
 ck("two calls to action, no more", ctas.length === 2, ctas.length + " found");
+ck("the last one is a strip, not a section",
+  /class="last"/.test(LANDING) && (LANDING.match(/^  <section/gm) || []).length === 4);
 const header = LANDING.slice(LANDING.indexOf("<header"), LANDING.indexOf("</header>"));
 ck("the header carries none of its own", !/class="[^"]*\bbtn\b/.test(header));
 ctas.forEach(t => ck(`"${t}"`, !VAGUE.includes(t.toLowerCase())));
 ck("every demo link is marked for the build rewrite",
   (LANDING.match(/claude\.ai\/code\/artifact/g) || []).length ===
   (LANDING.match(/data-demo-link/g) || []).length);
+
+/* The two pages have to point at each other, and both hrefs have to survive
+   being rewritten for the web build. */
+ck("the demo has a way back to this page", (DEMO.match(/data-landing-link/g) || []).length === 1);
+ck("its label says where it goes", /Back to the module page/.test(DEMO));
+ck("every artifact URL in the demo is marked for rewriting",
+  (DEMO.match(/claude\.ai\/code\/artifact/g) || []).length ===
+  (DEMO.match(/data-landing-link/g) || []).length);
+const build = fs.readFileSync(path.join(__dirname, "..", "scripts", "build.mjs"), "utf8");
+["data-demo-link", "data-landing-link"].forEach(attr =>
+  ck("  the build rewrites " + attr, build.includes(attr)));
 
 console.log("\n== structure and access ==");
 ck("exactly one h1", (LANDING.match(/<h1[\s>]/g) || []).length === 1);

@@ -110,8 +110,10 @@
   /* Only two gradients exist. A third use requires a new token. */
   --gradient-hero: linear-gradient(101deg,
       oklch(0.238 0.01 264) 0%, oklch(0.276 0.03 28) 52%, oklch(0.404 0.122 30) 100%);
-  --gradient-map: linear-gradient(180deg,
-      oklch(0.968 0.004 264) 0%, oklch(0.941 0.010 250) 100%);
+  --map-sea: oklch(0.921 0.021 236);
+  --map-land: oklch(0.976 0.005 110);
+  --map-coast: oklch(0.828 0.016 240);
+  --map-grid: oklch(0.882 0.014 238);
 
   /* ==== 3. MEASURE — 4px grid =========================================== */
   --sp-1: 2px;  --sp-2: 4px;  --sp-3: 6px;  --sp-4: 8px;
@@ -184,8 +186,10 @@
   --shadow-accent: none;
   --gradient-hero: linear-gradient(101deg,
       oklch(0.196 0.012 264) 0%, oklch(0.242 0.038 28) 55%, oklch(0.342 0.104 30) 100%);
-  --gradient-map: linear-gradient(180deg,
-      oklch(0.212 0.009 264) 0%, oklch(0.238 0.016 250) 100%);
+  --map-sea: oklch(0.196 0.017 240);
+  --map-land: oklch(0.262 0.008 150);
+  --map-coast: oklch(0.372 0.014 240);
+  --map-grid: oklch(0.292 0.010 240);
 }
 /* Same roles when the reader's OS is dark and they haven't forced light */
 @media (prefers-color-scheme: dark) {
@@ -224,8 +228,10 @@
     --shadow-accent: none;
     --gradient-hero: linear-gradient(101deg,
         oklch(0.196 0.012 264) 0%, oklch(0.242 0.038 28) 55%, oklch(0.342 0.104 30) 100%);
-    --gradient-map: linear-gradient(180deg,
-        oklch(0.212 0.009 264) 0%, oklch(0.238 0.016 250) 100%);
+    --map-sea: oklch(0.196 0.017 240);
+    --map-land: oklch(0.262 0.008 150);
+    --map-coast: oklch(0.372 0.014 240);
+    --map-grid: oklch(0.292 0.010 240);
   }
 }
 
@@ -610,6 +616,8 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
 .who__text { display: flex; flex-direction: column; min-width: 0; }
 .who .railinfo { margin-left: auto; }
 .railinfo { flex: none; text-decoration: none; }
+.railback { justify-content: flex-start; gap: var(--sp-3); text-decoration: none; }
+.railback:hover { text-decoration: none; }
 .railinfo:hover { text-decoration: none; color: var(--text); }
 
 .concept {
@@ -666,6 +674,7 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
   /* the rail turns into a horizontal bar; keep the brief reachable, drop the badge */
   .rail__foot { margin-top: 0; margin-left: auto; padding: 0; flex-direction: row; align-items: center; }
   .rail__foot .concept { display: none; }
+  .railback__t { display: none; }
   .who { padding-top: 0; border-top: 0; }
   .who__text { display: none; }
   .view, .topbar { padding-left: var(--sp-5); padding-right: var(--sp-5); }
@@ -781,7 +790,12 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
 .genie__acts { display: flex; gap: var(--sp-4); margin-top: var(--sp-5); }
 
 /* --- Corridor map (gradient use #2 of 2) --------------------------------- */
-.map { position: relative; height: 180px; background: var(--gradient-map); }
+.mapwrap { padding: var(--sp-5) var(--sp-6); }
+.map {
+  position: relative; width: min(100%, 40rem); margin-inline: auto;
+  aspect-ratio: 100 / 64; background: var(--map-sea);
+  border: 1px solid var(--border); border-radius: var(--r-control); overflow: hidden;
+}
 .pin { position: absolute; display: flex; translate: -50% -50%; border: 0; background: none; padding: 0; cursor: pointer; }
 .pin svg { width: 20px; height: 20px; stroke-width: 1.4; }
 .pin--ok   { color: var(--ok-fg);   fill: var(--ok-bg); }
@@ -1035,10 +1049,12 @@ table.data tbody tr.is-idle:hover { background: transparent; }
 /* ============================================================================
    CORRIDOR MAP
    ========================================================================= */
-.map { position: relative; height: 300px; background: var(--gradient-map); overflow: hidden; }
 .mapsvg { position: absolute; inset: 0; width: 100%; height: 100%; }
-.mapsvg text { font-family: var(--font); font-weight: var(--w-label); }
-.mapgrid { opacity: .6; }
+.mapland polygon { fill: var(--map-land); stroke: var(--map-coast); stroke-width: 0.25; stroke-linejoin: round; }
+.mapsea polygon  { fill: var(--map-sea);  stroke: var(--map-coast); stroke-width: 0.25; }
+.mapgrid { stroke: var(--map-grid); stroke-width: 0.2; fill: none; opacity: .7; }
+.mapsvg text { font-family: var(--font); font-weight: var(--w-label); paint-order: stroke;
+  stroke: var(--map-land); stroke-width: 0.5; stroke-linejoin: round; }
 
 .pin { transition: left 900ms linear, top 900ms linear; }
 .cluster { transition: left 900ms linear, top 900ms linear; }
@@ -1048,7 +1064,9 @@ table.data tbody tr.is-idle:hover { background: transparent; }
   width: 12px !important; height: 0 !important; border-radius: 0 !important;
   border-top: 1.5px dashed var(--border-strong);
 }
-@media (max-width: 720px) { .map { height: 220px; } .mapsvg text { display: none; } }
+/* No height here: the box keeps the viewBox's ratio, which is what stops the
+   pins and the roads drifting apart. Only the names go. */
+@media (max-width: 720px) { .mapwrap { padding: var(--sp-4); } .mapsvg text { display: none; } }
 
 
 /* ============================================================================
@@ -1289,6 +1307,7 @@ table.data tbody tr.is-idle:hover { background: transparent; }
   <symbol id="i-search" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.6"/><line x1="10.4" y1="10.4" x2="13.6" y2="13.6"/></symbol>
   <symbol id="i-chev-d" viewBox="0 0 16 16"><polyline points="4,6.4 8,10.4 12,6.4"/></symbol>
   <symbol id="i-chev-r" viewBox="0 0 16 16"><polyline points="6,4 10,8 6,12"/></symbol>
+<symbol id="i-chev-l" viewBox="0 0 16 16"><polyline points="10,4 6,8 10,12"/></symbol>
   <symbol id="i-funnel" viewBox="0 0 16 16"><polygon points="2,3 14,3 9.4,8.4 9.4,13.2 6.6,11.7 6.6,8.4"/></symbol>
   <symbol id="i-arrow-u" viewBox="0 0 16 16"><line x1="8" y1="13" x2="8" y2="3.6"/><polyline points="4.5,7.1 8,3.6 11.5,7.1"/></symbol>
   <symbol id="i-arrow-d" viewBox="0 0 16 16"><line x1="8" y1="3" x2="8" y2="12.4"/><polyline points="4.5,8.9 8,12.4 11.5,8.9"/></symbol>
@@ -1318,6 +1337,13 @@ table.data tbody tr.is-idle:hover { background: transparent; }
     </a>
     <nav class="nav" id="nav" aria-label="Fleet sections"></nav>
     <div class="rail__foot">
+      <a class="btn btn--secondary btn--sm railback has-tip" data-landing-link
+         href="https://claude.ai/code/artifact/20e1c315-7af3-41f5-91ee-392da25d9984"
+         data-tip="Leaves the demo and opens the page that explains what this module is and why it exists."
+         aria-label="Back to the module page">
+        <svg class="ico ico--sm" aria-hidden="true"><use href="#i-chev-l"/></svg>
+        <span class="railback__t">Back to the module page</span>
+      </a>
       <span class="concept" title="Unofficial concept. Every record below is fictional.">Concept · Demo data</span>
       <div class="who">
         <span class="avatar" aria-hidden="true">SB</span>
@@ -1628,8 +1654,8 @@ const TRIPS = [
     corridor: "TR → FR", pickup: "04.09", distanceKm: 2960, legMin: 360, adr: false,
     body: "tautliner", weightT: 20, eta: "11.09", declarations: {} },
 
-  { ref: "TR-4515", status: "unassigned", vehicleId: null, origin: "Gebze", destination: "Sofia",
-    corridor: "TR → RO", pickup: "05.09", distanceKm: 860, legMin: 240, adr: false,
+  { ref: "TR-4515", status: "unassigned", vehicleId: null, origin: "Gebze", destination: "Köstence",
+    corridor: "TR → RO", pickup: "05.09", distanceKm: 750, legMin: 240, adr: false,
     body: "box", weightT: 24, eta: "07.09", declarations: {} },
 ];
 
@@ -1679,7 +1705,7 @@ const ROUTE_POOL = [
   ["İzmir", "Duisburg", "TR → DE", 2620], ["Kocaeli", "Lyon", "TR → FR", 2840],
   ["Adana", "München", "TR → DE", 2380], ["Tekirdağ", "Antwerp", "TR → NL", 2680],
   ["Ambarlı", "Rotterdam", "TR → NL", 2740], ["Mersin", "Trieste", "TR → IT", 2180],
-  ["Gebze", "Sofia", "TR → RO", 860], ["Bursa", "Calais", "TR → FR", 2960],
+  ["Gebze", "Köstence", "TR → RO", 750], ["Bursa", "Calais", "TR → FR", 2960],
   ["İstanbul", "Manchester", "TR → UK", 3480], ["Gebze", "Birmingham", "TR → UK", 3260],
 ];
 const DELAYS = [
@@ -1701,7 +1727,8 @@ function declarationsFor(corridor, done) {
 }
 
 function buildTrips(vehicles, drivers) {
-  const list = TRIPS.map(t => ({ ...t, progress: t.status === "active" ? 2 : 0, delayed: false, delayReason: null }));
+  const list = TRIPS.map(t => ({ ...t, progress: t.status === "active" ? 2 : 0,
+    legProgress: t.status === "active" ? 0.45 : 0, delayed: false, delayReason: null }));
   const driverOf = id => (drivers.find(d => d.vehicleId === id) || {}).id || null;
   list.forEach(t => { if (t.vehicleId) t.driverId = driverOf(t.vehicleId); });
 
@@ -1726,6 +1753,7 @@ function buildTrips(vehicles, drivers) {
       body: ["reefer", "tautliner", "mega", "box"][i % 4], weightT,
       pickup: dateIn(-(1 + (i % 5))).slice(0, 6), eta: dateIn(1 + (i % 7)).slice(0, 6),
       progress: 1 + Math.floor(rnd() * 4),
+      legProgress: rnd(),          // how far into the current leg it already is
       declarations: late && i === 0
         ? { ...declarationsFor(corridor, false), gvms: "missing" }
         : declarationsFor(corridor, false),
@@ -1745,7 +1773,7 @@ function buildTrips(vehicles, drivers) {
       legMin: 240 + Math.floor(rnd() * 200), adr: rnd() < 0.2,
       body: ["reefer", "tautliner", "mega", "box"][i % 4], weightT,
       pickup: dateIn(-(20 + i * 3)).slice(0, 6), eta: dateIn(-(12 + i * 3)).slice(0, 6),
-      progress: 6,
+      progress: 6, legProgress: 1,
       declarations: declarationsFor(corridor, true),
       cost: (() => {
         const fuel = Math.round(km * v.costPerKm * 0.62);
@@ -2232,55 +2260,153 @@ Store.subscribe(render);
 
 /* ============================================================================
    CORRIDOR GEOGRAPHY
-   Cities are placed by real longitude and latitude, projected into a 100 x 60
-   box. The map is schematic on purpose — a transit diagram of the corridors
-   Modaltrans actually serves, not an attempt at a world map.
-       x = (lon + 4) * 2.5      y = (54 - lat) * 3.158
+   Places are stored as real longitude and latitude and projected here, so the
+   map can be checked against an atlas instead of trusted. The projection is
+   equidistant cylindrical with the standard parallel at 45°N, the middle of the
+   band these corridors run through, so shapes hold at Calais as well as at
+   Mersin rather than only in the south.
+       x = (lon − lon0) · cos 45° · k        y = (lat0 − lat) · k
    ========================================================================= */
-const CITY = {
-  Manchester: [4.5, 1.6],   Birmingham: [5.3, 4.7],   Dover: [13.3, 9.2],
-  Calais: [14.8, 9.8],      Antwerp: [21.0, 8.8],     Rotterdam: [21.3, 6.6],
-  Duisburg: [27.0, 8.2],    Lyon: [22.0, 25.9],       "München": [39.0, 18.6],
-  Trieste: [44.5, 26.2],    Belgrade: [61.3, 29.1],   Sofia: [68.3, 35.7],
-  "Köstence": [81.5, 31.0], "Kapıkule": [76.5, 38.8], "İstanbul": [82.5, 41.1],
-  "Ambarlı": [81.8, 41.1],  Gebze: [83.5, 41.7],      Bursa: [82.8, 43.6],
-  "İzmir": [77.8, 49.3],    Mersin: [96.5, 54.3],
+const MAP_W = 100, MAP_H = 64;
+const PROJ = { lon0: -4.8, lat0: 54.5, k: 3.25, cos0: Math.cos(45 * Math.PI / 180) };
+const project = ([lon, lat]) => [
+  Math.round((lon - PROJ.lon0) * PROJ.cos0 * PROJ.k * 100) / 100,
+  Math.round((PROJ.lat0 - lat) * PROJ.k * 100) / 100,
+];
+
+/* Every place the app can name. Anything drawn as a dot lives here. */
+const PLACE = {
+  Manchester: [-2.24, 53.48], Birmingham: [-1.90, 52.48], Dover: [1.31, 51.13],
+  Calais: [1.86, 50.95],      Antwerp: [4.40, 51.22],     Rotterdam: [4.48, 51.92],
+  Duisburg: [6.76, 51.43],    Lyon: [4.84, 45.76],        "München": [11.58, 48.14],
+  Trieste: [13.78, 45.65],    Belgrade: [20.45, 44.79],   Sofia: [23.32, 42.70],
+  Varna: [27.92, 43.20],      "Köstence": [28.63, 44.18], "Kapıkule": [26.34, 41.72],
+  "Tekirdağ": [27.51, 40.98], "İstanbul": [28.98, 41.01], "Ambarlı": [28.68, 40.97],
+  Gebze: [29.43, 40.80],      Kocaeli: [29.92, 40.77],    Bursa: [29.06, 40.19],
+  "İzmir": [27.14, 38.42],    Mersin: [34.63, 36.80],     Adana: [35.32, 37.00],
 };
 
-/* Each corridor is a chain of waypoints. `sea` marks the legs that ride a
-   ferry rather than tarmac — they draw dashed. */
-const CORRIDOR_ROUTES = {
-  "TR → UK": { via: ["İstanbul", "Kapıkule", "Belgrade", "München", "Calais", "Dover", "Manchester"], sea: [[4, 5]] },
-  "TR → NL": { via: ["Ambarlı", "Kapıkule", "Belgrade", "München", "Rotterdam"], sea: [] },
-  "TR → DE": { via: ["İzmir", "Kapıkule", "Sofia", "München", "Duisburg"], sea: [] },
-  "TR → IT": { via: ["Mersin", "Trieste"], sea: [[0, 1]] },
-  "TR → FR": { via: ["Bursa", "Kapıkule", "Belgrade", "Lyon", "Calais"], sea: [] },
-  "TR → RO": { via: ["Gebze", "Köstence", "Sofia"], sea: [] },
-  "TR → TR": { via: ["İstanbul", "Bursa", "İzmir"], sea: [] },
+/* Shape points that bend a sea route around a coast. Never drawn, never named. */
+const WAY = {
+  "~aegean": [26.50, 35.90], "~ionian": [20.50, 37.20],
+  "~otranto": [18.80, 40.30], "~adriatic": [15.50, 43.50],
 };
 
-/** Cumulative lengths so a fraction of the trip maps to a fraction of the road. */
-function routeGeometry(corridor) {
-  const r = CORRIDOR_ROUTES[corridor] || CORRIDOR_ROUTES["TR → DE"];
-  const pts = r.via.map(c => CITY[c] || [50, 30]);
+const CITY = Object.fromEntries(Object.entries(PLACE).map(([n, ll]) => [n, project(ll)]));
+const NODE = { ...CITY, ...Object.fromEntries(Object.entries(WAY).map(([n, ll]) => [n, project(ll)])) };
+
+/* Coastlines, traced coarsely in longitude and latitude and projected with the
+   same function as the cities, so the land and the roads can never drift apart.
+   Anything past the edge of the box is clipped by the viewBox. The Bosphorus
+   and the Dardanelles are thinner than the stroke at this scale, so Europe and
+   Anatolia are one outline and the Sea of Marmara is painted back on top. */
+const LAND = [
+  /* Europe, Anatolia and the Levant. The Black Sea is a notch in the outline. */
+  [[-6.0, 48.5], [-2.0, 49.7], [0.2, 49.7], [1.6, 50.9], [3.4, 51.4], [4.3, 52.1],
+   [5.4, 53.4], [8.2, 53.6], [9.3, 55.5], [12.5, 55.5], [19.0, 55.5], [30.0, 55.5],
+   [40.0, 55.5], [40.0, 47.0], [38.0, 46.5], [36.9, 45.5], [35.5, 45.4], [33.5, 44.4],
+   [33.6, 46.1], [31.5, 46.6], [29.7, 45.4], [28.8, 44.2], [28.5, 43.4], [27.9, 42.4],
+   [28.2, 41.4], [31.0, 41.3], [35.0, 42.0], [38.5, 41.3], [40.0, 41.0], [40.0, 34.0],
+   [35.5, 34.0], [35.0, 35.5], [36.1, 36.2], [34.8, 36.7], [32.0, 36.1], [30.5, 36.3],
+   [28.2, 36.7], [27.2, 37.6], [26.4, 38.4], [26.2, 39.5], [26.2, 40.4], [25.0, 40.9],
+   [23.7, 40.5], [23.0, 39.3], [23.8, 38.0], [23.1, 37.4], [23.0, 36.5], [21.7, 36.8],
+   [21.1, 37.7], [21.3, 38.3], [20.9, 39.2], [19.9, 40.1], [19.4, 41.3], [18.9, 42.4],
+   [17.2, 43.0], [15.2, 44.3], [13.6, 45.5], [12.3, 45.5], [12.6, 44.3], [14.2, 42.4],
+   [16.0, 41.9], [18.4, 40.2], [17.0, 40.5], [16.2, 38.9], [15.7, 38.0], [14.4, 40.6],
+   [12.3, 41.4], [10.3, 43.0], [8.8, 44.4], [7.0, 43.5], [5.0, 43.3], [3.0, 42.5],
+   [1.0, 41.1], [0.2, 39.9], [-0.5, 38.4], [-2.5, 36.8], [-6.0, 36.2], [-6.0, 43.4],
+   [-1.8, 43.4], [-1.2, 44.6], [-1.1, 46.2], [-2.3, 47.3]],
+  /* Great Britain */
+  [[-5.7, 50.05], [-3.5, 50.35], [-1.9, 50.72], [0.0, 50.78], [1.45, 51.13],
+   [1.30, 51.85], [1.75, 52.48], [0.35, 53.60], [-0.20, 54.10], [-1.10, 54.65],
+   [-1.60, 55.80], [-3.10, 56.30], [-5.10, 56.20], [-4.90, 55.20], [-3.10, 54.10],
+   [-4.10, 53.30], [-5.30, 51.75], [-4.20, 51.60], [-3.20, 51.30], [-3.60, 50.60]],
+  /* North Africa, running off the bottom of the box */
+  [[-6.0, 35.9], [-2.0, 35.3], [0.5, 36.0], [3.1, 36.9], [5.8, 36.9], [8.6, 37.1],
+   [10.2, 37.1], [11.1, 35.6], [11.5, 33.0], [-6.0, 33.0]],
+  /* Sicily */  [[15.65, 38.25], [15.30, 37.05], [15.10, 36.70], [12.45, 37.80], [13.35, 38.20]],
+  /* Sardinia */[[8.20, 41.15], [9.60, 41.10], [9.55, 39.15], [8.45, 38.90], [8.35, 40.30]],
+  /* Corsica */ [[8.60, 43.00], [9.55, 42.65], [9.40, 41.40], [8.60, 41.50]],
+  /* Crete */   [[23.55, 35.30], [26.30, 35.30], [26.00, 34.95], [23.60, 34.90]],
+  /* Cyprus */  [[32.30, 35.15], [34.60, 35.70], [34.05, 34.60], [32.35, 34.60]],
+];
+/* Painted back over the land, because the outline above closed the straits. */
+const INLAND_SEA = [
+  [[26.90, 40.45], [29.80, 40.65], [29.60, 41.05], [27.10, 40.85]],
+];
+const poly = ring => ring.map(project).map(p => p.join(",")).join(" ");
+
+/* Each corridor is a transit spine. The two ends come from the trip itself, so
+   a run to Birmingham is drawn to Birmingham rather than to Manchester.
+   `marks` says which place each of the six chain milestones sits at, which is
+   what keeps the pin and the trip chain from telling different stories. */
+const CORRIDOR = {
+  "TR → UK": { mid: ["Kapıkule", "Belgrade", "München", "Calais", "Dover"],
+               sea: [["Calais", "Dover"]],
+               marks: ["@origin", "Kapıkule", "Calais", "Dover", "Dover", "@dest"] },
+  "TR → NL": { mid: ["Kapıkule", "Belgrade", "München"], sea: [],
+               marks: ["@origin", "Kapıkule", "Belgrade", "München", "München", "@dest"] },
+  "TR → DE": { mid: ["Kapıkule", "Sofia", "München"], sea: [],
+               marks: ["@origin", "Kapıkule", "Sofia", "München", "München", "@dest"] },
+  "TR → IT": { mid: ["~aegean", "~ionian", "~otranto", "~adriatic"], sea: "all",
+               marks: ["@origin", "@origin", "~aegean", "~adriatic", "@dest", "@dest"] },
+  "TR → FR": { mid: ["Kapıkule", "Belgrade", "Lyon"], sea: [],
+               marks: ["@origin", "Kapıkule", "Belgrade", "Lyon", "Lyon", "@dest"] },
+  "TR → RO": { mid: ["Kapıkule", "Varna"], sea: [],
+               marks: ["@origin", "Kapıkule", "Kapıkule", "Varna", "Varna", "@dest"] },
+  "TR → TR": { mid: ["Bursa"], sea: [],
+               marks: ["@origin", "Bursa", "Bursa", "Bursa", "Bursa", "@dest"] },
+};
+
+/** The waypoints this particular run passes, its own endpoints included. */
+function routeFor(trip) {
+  const c = CORRIDOR[trip.corridor] || CORRIDOR["TR → DE"];
+  const from = NODE[trip.origin] ? trip.origin : "İstanbul";
+  const to = NODE[trip.destination] ? trip.destination : c.mid[c.mid.length - 1];
+  return [from, ...c.mid, to].filter((n, i, a) => i === 0 || n !== a[i - 1]);
+}
+
+/** Cumulative lengths, so a fraction of the run maps to a fraction of the road. */
+const GEO_CACHE = {};
+function geometry(names) {
+  const key = names.join("|");
+  if (GEO_CACHE[key]) return GEO_CACHE[key];
+  const pts = names.map(n => NODE[n] || [50, 32]);
   const seg = [], acc = [0];
   for (let i = 1; i < pts.length; i++) {
     const d = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
     seg.push(d); acc.push(acc[i - 1] + d);
   }
-  return { pts, seg, acc, total: acc[acc.length - 1], sea: r.sea };
+  return (GEO_CACHE[key] = { names, pts, seg, acc, total: acc[acc.length - 1] || 1 });
 }
-const ROUTE_CACHE = {};
-const geoFor = corridor => (ROUTE_CACHE[corridor] || (ROUTE_CACHE[corridor] = routeGeometry(corridor)));
+const geoForTrip = trip => geometry(routeFor(trip));
 
-/** How far along its corridor a trip has got, 0 to 1. */
+/** Where the six chain milestones sit along this run, as fractions, never
+    going backwards even when a milestone's place fell out of the route. */
+function milestones(trip) {
+  const c = CORRIDOR[trip.corridor] || CORRIDOR["TR → DE"];
+  const names = routeFor(trip), g = geometry(names);
+  let last = 0;
+  return c.marks.map(tok => {
+    const n = tok === "@origin" ? names[0] : tok === "@dest" ? names[names.length - 1] : tok;
+    const i = names.indexOf(n);
+    const f = i < 0 ? last : g.acc[i] / g.total;
+    return (last = Math.max(last, f));
+  });
+}
+
+/** How far along its corridor a run has got, 0 to 1. The milestone it has
+    reached fixes the anchor; legProgress carries it towards the next one. */
 function tripFraction(trip) {
-  const base = (trip.progress ?? 0) / 5;
-  return Math.max(0, Math.min(1, base * 0.92 + (trip.drift || 0)));
+  const m = milestones(trip);
+  const p = Math.max(0, Math.min(5, trip.progress ?? 0));
+  const a = m[p], b = p < 5 ? m[p + 1] : 1;
+  const t = Math.max(0, Math.min(1, trip.legProgress ?? 0));
+  return Math.max(0, Math.min(1, a + (b - a) * t));
 }
 
-function pointAt(corridor, frac) {
-  const g = geoFor(corridor);
+function pointOn(names, frac) {
+  const g = geometry(names);
   const want = Math.max(0, Math.min(1, frac)) * g.total;
   for (let i = 1; i < g.acc.length; i++) {
     if (want <= g.acc[i] || i === g.acc.length - 1) {
@@ -2291,7 +2417,7 @@ function pointAt(corridor, frac) {
   }
   return g.pts[g.pts.length - 1];
 }
-const tripPosition = trip => pointAt(trip.corridor, tripFraction(trip));
+const tripPosition = trip => pointOn(routeFor(trip), tripFraction(trip));
 
 /** Delayed and blocked runs always stand alone; the rest collapse into counts. */
 function mapMarkers() {
@@ -2300,8 +2426,9 @@ function mapMarkers() {
   live.forEach(t => {
     const v = S.all().find(x => x.id === t.vehicleId);
     if (!v) return;
-    const entry = { trip: t, vehicle: v, at: tripPosition(t) };
-    (t.delayed || blockersFor(t) > 0 ? solo : rest).push(entry);
+    const blocked = blockersFor(t) > 0;
+    const entry = { trip: t, vehicle: v, at: tripPosition(t), blocked };
+    (t.delayed || blocked ? solo : rest).push(entry);
   });
 
   const CELL = 9;
@@ -2326,39 +2453,70 @@ function mapMarkers() {
 /* ============================================================================
    MAP PANEL + LIVE SIMULATION
    ========================================================================= */
-const LABELLED = ["Manchester", "Dover", "Rotterdam", "Duisburg", "Lyon", "München",
-                  "Trieste", "Belgrade", "Sofia", "Köstence", "İstanbul", "Mersin"];
+/* Where a name sits relative to its dot: [dx, dy, anchor]. Calais and Dover are
+   1.4 units apart, so they lean away from each other rather than overlap. */
+const LABEL = {
+  Manchester: [1.6, 1, "start"], Dover: [-1.6, 0.4, "end"], Calais: [1.6, 0.4, "start"],
+  Rotterdam: [1.6, -0.4, "start"], Duisburg: [1.6, 1.4, "start"], Lyon: [1.6, 1, "start"],
+  "München": [1.6, 1, "start"], Trieste: [-1.6, 1.6, "end"], Belgrade: [1.6, 1, "start"],
+  Sofia: [1.6, 1.4, "start"], "Köstence": [1.6, 0.2, "start"], "Kapıkule": [1.6, -0.8, "start"],
+  "İstanbul": [1.6, -0.6, "start"], Mersin: [-1.6, 1.4, "end"],
+};
+
+/** The routes actually being run, drawn once each however many trips share one. */
+function drawnRoutes() {
+  const seen = new Map();
+  S.trips().forEach(t => {
+    if (t.status === "completed") return;
+    const names = routeFor(t), key = names.join("|");
+    if (!seen.has(key)) seen.set(key, { names, corridor: t.corridor, live: false });
+    if (t.status === "active") seen.get(key).live = true;
+  });
+  return [...seen.values()];
+}
 
 function mapSvg() {
-  const used = new Set(S.trips().filter(t => t.status === "active").map(t => t.corridor));
-
+  /* Both axes are a real graticule: meridians every 5°, parallels every 5°. */
   const grid = [];
-  for (let x = 10; x < 100; x += 15) grid.push(`<line x1="${x}" y1="0" x2="${x}" y2="60"/>`);
-  for (let y = 10; y < 60; y += 12) grid.push(`<line x1="0" y1="${y}" x2="100" y2="${y}"/>`);
+  for (let lon = 0; lon <= 35; lon += 5) {
+    const x = project([lon, 0])[0];
+    grid.push(`<line x1="${x}" y1="0" x2="${x}" y2="${MAP_H}"/>`);
+  }
+  for (let lat = 35; lat <= 50; lat += 5) {
+    const y = project([0, lat])[1];
+    grid.push(`<line x1="0" y1="${y}" x2="${MAP_W}" y2="${y}"/>`);
+  }
 
-  const roads = Object.keys(CORRIDOR_ROUTES).map(c => {
-    const g = geoFor(c);
-    const live = used.has(c);
+  const land = LAND.map(r => `<polygon points="${poly(r)}"/>`).join("");
+  const inland = INLAND_SEA.map(r => `<polygon points="${poly(r)}"/>`).join("");
+
+  const roads = drawnRoutes().map(({ names, corridor, live }) => {
+    const g = geometry(names);
+    const seaOf = CORRIDOR[corridor] || {};
     return g.pts.slice(1).map((p, i) => {
       const a = g.pts[i];
-      const isSea = g.sea.some(([s, e]) => s === i && e === i + 1);
+      const isSea = seaOf.sea === "all" ||
+        (Array.isArray(seaOf.sea) && seaOf.sea.some(([s, e]) => s === names[i] && e === names[i + 1]));
       return `<line x1="${a[0]}" y1="${a[1]}" x2="${p[0]}" y2="${p[1]}"
-        stroke="var(--border-strong)" stroke-width="${live ? 0.7 : 0.4}"
+        stroke="var(--border-strong)" stroke-width="${live ? 0.65 : 0.4}"
         stroke-linecap="round" opacity="${live ? 0.95 : 0.45}"
         ${isSea ? 'stroke-dasharray="1.6 1.4"' : ""}/>`;
     }).join("");
   }).join("");
 
-  const dots = Object.entries(CITY).map(([name, [x, y]]) => `
-    <circle cx="${x}" cy="${y}" r="${LABELLED.includes(name) ? 0.9 : 0.6}"
+  const dots = Object.entries(CITY).map(([name, [x, y]]) => {
+    const l = LABEL[name];
+    return `<circle cx="${x}" cy="${y}" r="${l ? 0.9 : 0.6}"
             fill="var(--surface)" stroke="var(--border-strong)" stroke-width="0.35"/>
-    ${LABELLED.includes(name)
-      ? `<text x="${x + 1.6}" y="${y + 1}" font-size="2.1" fill="var(--text-muted)">${name}</text>`
-      : ""}`).join("");
+    ${l ? `<text x="${x + l[0]}" y="${y + l[1]}" font-size="2.1" text-anchor="${l[2]}"
+             fill="var(--text-2)">${name}</text>` : ""}`;
+  }).join("");
 
-  return `<svg class="mapsvg" viewBox="0 0 100 60" preserveAspectRatio="xMidYMid meet"
-               role="img" aria-label="Corridor map from Türkiye to Europe and the UK">
-    <g class="mapgrid" stroke="var(--border)" stroke-width="0.2">${grid.join("")}</g>
+  return `<svg class="mapsvg" viewBox="0 0 ${MAP_W} ${MAP_H}" preserveAspectRatio="none"
+               role="img" aria-label="Corridor map from Türkiye to Europe and the UK, drawn to a 45th parallel projection">
+    <g class="mapland">${land}</g>
+    <g class="mapsea">${inland}</g>
+    <g class="mapgrid">${grid.join("")}</g>
     <g>${roads}</g>
     <g>${dots}</g>
   </svg>`;
@@ -2368,15 +2526,15 @@ function mapMarkersHtml() {
   const { singles, clusters } = mapMarkers();
   const pin = e => {
     const t = e.trip, v = e.vehicle;
-    const cls = t.delayed ? "pin--bad" : blockersFor(t) > 0 ? "pin--sel" : "pin--info";
-    const why = t.delayed ? " — running late" : blockersFor(t) > 0 ? " — blocked" : " — on trip";
+    const cls = t.delayed ? "pin--bad" : e.blocked ? "pin--sel" : "pin--info";
+    const why = t.delayed ? " — running late" : e.blocked ? " — blocked" : " — on trip";
     return `<button class="pin ${cls}" data-pin="${t.ref}" data-vehicle="${v.id}"
-      style="left:${e.at[0]}%;top:${e.at[1] / 60 * 100}%"
+      style="left:${e.at[0] / MAP_W * 100}%;top:${e.at[1] / MAP_H * 100}%"
       aria-label="${esc(v.plate)}, ${esc(t.origin)} to ${esc(t.destination)}${why}">
       ${ico(t.delayed ? "alert" : "truck")}</button>`;
   };
   const cluster = c => `<button class="cluster" data-cluster="${c.members.length}"
-      style="left:${c.at[0]}%;top:${c.at[1] / 60 * 100}%"
+      style="left:${c.at[0] / MAP_W * 100}%;top:${c.at[1] / MAP_H * 100}%"
       aria-label="${c.members.length} trucks in this area">${c.members.length}</button>`;
   return singles.map(pin).join("") + clusters.map(cluster).join("");
 }
@@ -2392,7 +2550,7 @@ function mapPanel(storyTrip) {
               aria-pressed="${Sim.running}" aria-label="${Sim.running ? "Pause live tracking" : "Resume live tracking"}">
         ${ico(Sim.running ? "pause" : "play", "ico ico--sm")}</button>
     </div>
-    <div class="map" id="map">${mapSvg()}${mapMarkersHtml()}</div>
+    <div class="mapwrap"><div class="map" id="map">${mapSvg()}${mapMarkersHtml()}</div></div>
     <div class="legend">
       <span><i style="background:var(--info-fg)"></i>On trip</span>
       <span><i style="background:var(--accent)"></i>Blocked</span>
@@ -2436,10 +2594,16 @@ const Sim = {
 
   step() {
     this.seconds++;
+    /* Every truck covers the same distance on the map per second, so a short
+       corridor no longer makes its trucks look like they are sprinting. */
     Store.tick(st => {
       st.trips.forEach(t => {
         if (t.status !== "active") return;
-        t.drift = Math.min(0.08, (t.drift || 0) + 0.0016 + rnd() * 0.0012);
+        const g = geoForTrip(t), m = milestones(t);
+        const p = Math.max(0, Math.min(5, t.progress ?? 0));
+        const legLen = ((p < 5 ? m[p + 1] : 1) - m[p]) * g.total;
+        const step = legLen > 0.02 ? (0.5 + rnd() * 0.2) / legLen : 0;
+        t.legProgress = Math.min(1, (t.legProgress ?? 0) + step);
       });
     });
     if (this.seconds % 5 === 0) A.advanceSimulation();   // odometers creep with the trucks
@@ -2455,8 +2619,8 @@ const Sim = {
       const t = S.tripByRef(el.dataset.pin);
       if (!t) return;
       const [x, y] = tripPosition(t);
-      el.style.left = x + "%";
-      el.style.top = (y / 60 * 100) + "%";
+      el.style.left = (x / MAP_W * 100) + "%";
+      el.style.top = (y / MAP_H * 100) + "%";
     });
   },
 
